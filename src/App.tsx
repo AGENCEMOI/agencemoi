@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import ClientForm from "./pages/ClientForm";
 import ProfessionalForm from "./pages/ProfessionalForm";
 import CommentCaMarche from "./pages/CommentCaMarche";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ const App = () => (
           <Route path="/client-form" element={<ClientForm />} />
           <Route path="/professional-form" element={<ProfessionalForm />} />
           <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
