@@ -7,22 +7,22 @@ const Features = () => {
     {
       icon: <Clock className="h-12 w-12 text-agence-orange-500" />,
       title: 'Réponse en 24h',
-      description: 'Recevez jusqu'à trois devis personnalisés et détaillés de professionnels qualifiés en moins de 24 heures.'
+      description: "Recevez jusqu'à trois devis personnalisés et détaillés de professionnels qualifiés en moins de 24 heures."
     },
     {
       icon: <Users className="h-12 w-12 text-agence-orange-500" />,
       title: 'Professionnels vérifiés',
-      description: 'Nous sélectionnons rigoureusement nos partenaires pour garantir qualité et professionnalisme.'
+      description: "Nous sélectionnons rigoureusement nos partenaires pour garantir qualité et professionnalisme."
     },
     {
       icon: <Palette className="h-12 w-12 text-agence-orange-500" />,
       title: 'Projets sur mesure',
-      description: 'De la cuisine à la salle de bain, nos experts s'adaptent à vos besoins et à votre budget.'
+      description: "De la cuisine à la salle de bain, nos experts s'adaptent à vos besoins et à votre budget."
     },
     {
       icon: <Shield className="h-12 w-12 text-agence-orange-500" />,
       title: 'Service gratuit',
-      description: 'Notre service de mise en relation est entièrement gratuit pour les particuliers.'
+      description: "Notre service de mise en relation est entièrement gratuit pour les particuliers."
     }
   ];
 
