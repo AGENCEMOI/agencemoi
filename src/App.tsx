@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ClientForm from "./pages/ClientForm";
 import ProfessionalForm from "./pages/ProfessionalForm";
+import CommentCaMarche from "./pages/CommentCaMarche";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/client-form" element={<ClientForm />} />
           <Route path="/professional-form" element={<ProfessionalForm />} />
+          <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
