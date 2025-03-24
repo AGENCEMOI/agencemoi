@@ -1,8 +1,40 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import StepIndicator from '@/components/ui/StepIndicator';
-import { ArrowLeft, ArrowRight, Upload, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, Info, Check } from 'lucide-react';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+const mockProfessionals = [
+  { id: 1, name: 'Cuisines Modernes', specialty: 'Cuisine', rating: 4.8, postalCode: '75001', city: 'Paris' },
+  { id: 2, name: 'Déco Intérieure', specialty: 'Aménagement', rating: 4.6, postalCode: '75002', city: 'Paris' },
+  { id: 3, name: 'Salles de Bain Élégantes', specialty: 'Salle de bain', rating: 4.9, postalCode: '75003', city: 'Paris' },
+  { id: 4, name: 'Concept Rangement', specialty: 'Dressing', rating: 4.7, postalCode: '75004', city: 'Paris' },
+  { id: 5, name: 'Cuisines & Co', specialty: 'Cuisine', rating: 4.5, postalCode: '75005', city: 'Paris' },
+  { id: 6, name: 'Habitat Design', specialty: 'Aménagement', rating: 4.8, postalCode: '75006', city: 'Paris' },
+  { id: 7, name: 'L\'Atelier Cuisine', specialty: 'Cuisine', rating: 4.9, postalCode: '75007', city: 'Paris' },
+  { id: 8, name: 'Bain & Déco', specialty: 'Salle de bain', rating: 4.6, postalCode: '75008', city: 'Paris' },
+  { id: 9, name: 'Lyon Cuisines', specialty: 'Cuisine', rating: 4.7, postalCode: '69001', city: 'Lyon' },
+  { id: 10, name: 'Espace Rangement', specialty: 'Dressing', rating: 4.8, postalCode: '69002', city: 'Lyon' },
+  { id: 11, name: 'Meubles Sur Mesure', specialty: 'Aménagement', rating: 4.9, postalCode: '69003', city: 'Lyon' },
+  { id: 12, name: 'Cuisines Élégance', specialty: 'Cuisine', rating: 4.5, postalCode: '69004', city: 'Lyon' },
+  { id: 13, name: 'Marseille Déco', specialty: 'Aménagement', rating: 4.8, postalCode: '13001', city: 'Marseille' },
+  { id: 14, name: 'Ambiance Bain', specialty: 'Salle de bain', rating: 4.6, postalCode: '13002', city: 'Marseille' },
+  { id: 15, name: 'Concept Cuisine', specialty: 'Cuisine', rating: 4.7, postalCode: '13003', city: 'Marseille' },
+];
 
 const MultiStepForm = () => {
   const { toast } = useToast();
@@ -40,14 +72,39 @@ const MultiStepForm = () => {
     
     // Files
     floorPlan: null,
-    photos: []
+    photos: [],
+
+    // Selected professionals
+    selectedProfessionals: []
   });
+
+  const [localProfessionals, setLocalProfessionals] = useState([]);
+  const [selectedCount, setSelectedCount] = useState(0);
+
+  useEffect(() => {
+    // In a real app, this would be an API call filtering by the postal code
+    if (formData.postalCode) {
+      // Get the first two digits of postal code to simulate filtering by department
+      const postalPrefix = formData.postalCode.substring(0, 2);
+      const filtered = mockProfessionals.filter(pro => 
+        pro.postalCode.startsWith(postalPrefix)
+      );
+      
+      // If no professionals found in the area, show all as fallback
+      setLocalProfessionals(filtered.length > 0 ? filtered : mockProfessionals);
+    }
+  }, [formData.postalCode, currentStep]);
+
+  useEffect(() => {
+    setSelectedCount(formData.selectedProfessionals.length);
+  }, [formData.selectedProfessionals]);
 
   const steps = [
     { title: 'Infos personnelles' },
     { title: 'Projet' },
     { title: 'Spécifications' },
     { title: 'Documents' },
+    { title: 'Professionnels' },
     { title: 'Confirmation' }
   ];
 
@@ -112,7 +169,46 @@ const MultiStepForm = () => {
     }
   };
 
+  const toggleProfessionalSelection = (professionalId) => {
+    setFormData(prevData => {
+      const isSelected = prevData.selectedProfessionals.includes(professionalId);
+      let newSelection;
+
+      if (isSelected) {
+        // Remove from selection
+        newSelection = prevData.selectedProfessionals.filter(id => id !== professionalId);
+      } else {
+        // Add to selection, but limit to 5
+        if (prevData.selectedProfessionals.length < 5) {
+          newSelection = [...prevData.selectedProfessionals, professionalId];
+        } else {
+          toast({
+            title: "Maximum atteint",
+            description: "Vous pouvez sélectionner jusqu'à 5 professionnels.",
+            variant: "destructive"
+          });
+          return prevData;
+        }
+      }
+
+      return {
+        ...prevData,
+        selectedProfessionals: newSelection
+      };
+    });
+  };
+
   const nextStep = () => {
+    // Validate minimum number of professionals selected before proceeding to confirmation
+    if (currentStep === 4 && formData.selectedProfessionals.length < 3) {
+      toast({
+        title: "Sélection requise",
+        description: "Veuillez sélectionner au moins 3 professionnels pour continuer.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
@@ -577,6 +673,86 @@ const MultiStepForm = () => {
     </div>
   );
 
+  const renderProfessionalsStep = () => (
+    <div className="animate-fade-in">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Choisissez vos professionnels</h3>
+      
+      <div className="mb-6 p-4 bg-agence-orange-50 border border-agence-orange-200 rounded-lg">
+        <div className="flex items-start space-x-3">
+          <Info className="text-agence-orange-500 h-5 w-5 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-agence-gray-800">Sélectionnez entre 3 et 5 professionnels</h4>
+            <p className="text-sm text-agence-gray-600">
+              Ces professionnels recevront votre demande de devis et vous contacteront avec leurs propositions.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-lg font-medium text-agence-gray-800">
+          Professionnels dans votre secteur
+        </h4>
+        <div className="text-sm font-medium px-3 py-1 bg-agence-orange-100 text-agence-orange-800 rounded-full">
+          {selectedCount}/5 sélectionnés
+        </div>
+      </div>
+      
+      <div className="space-y-4">
+        {localProfessionals.length > 0 ? (
+          localProfessionals.map(professional => {
+            const isSelected = formData.selectedProfessionals.includes(professional.id);
+            
+            return (
+              <div 
+                key={professional.id}
+                className={`p-4 border rounded-lg transition-all ${
+                  isSelected 
+                    ? 'border-agence-orange-500 bg-agence-orange-50' 
+                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h5 className="font-semibold text-agence-gray-800">{professional.name}</h5>
+                    <div className="text-sm text-agence-gray-600 mt-1">
+                      <span className="inline-block mr-4">{professional.specialty}</span>
+                      <span className="inline-block mr-4">{professional.city} ({professional.postalCode})</span>
+                      <span className="inline-flex items-center">
+                        <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        {professional.rating}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleProfessionalSelection(professional.id)}
+                    className={`flex items-center justify-center w-6 h-6 rounded-full border ${
+                      isSelected 
+                        ? 'bg-agence-orange-500 border-agence-orange-500 text-white' 
+                        : 'border-agence-gray-300 bg-white'
+                    }`}
+                    aria-label={isSelected ? "Désélectionner" : "Sélectionner"}
+                  >
+                    {isSelected && <Check className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center p-8 border border-dashed border-agence-gray-300 rounded-lg">
+            <p className="text-agence-gray-600">
+              Aucun professionnel trouvé dans votre secteur. Veuillez vérifier votre code postal.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   const renderConfirmationStep = () => (
     <div className="animate-fade-in">
       <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Confirmation de votre demande</h3>
@@ -677,6 +853,28 @@ const MultiStepForm = () => {
           
           <div>
             <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
+              Professionnels sélectionnés
+            </h4>
+            <div className="space-y-2">
+              {formData.selectedProfessionals.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {formData.selectedProfessionals.map(proId => {
+                    const pro = localProfessionals.find(p => p.id === proId);
+                    return pro ? (
+                      <li key={pro.id} className="text-agence-gray-700">
+                        {pro.name} - {pro.specialty}, {pro.city}
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              ) : (
+                <p className="text-sm text-red-500">Aucun professionnel sélectionné</p>
+              )}
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
               Documents joints
             </h4>
             <div className="space-y-2 text-sm">
@@ -729,6 +927,8 @@ const MultiStepForm = () => {
       case 3:
         return renderDocumentsStep();
       case 4:
+        return renderProfessionalsStep();
+      case 5:
         return renderConfirmationStep();
       default:
         return null;
