@@ -90,22 +90,6 @@ const Footer = () => {
                 <span className="text-agence-gray-300">agencemoi@gmail.com</span>
               </li>
             </ul>
-            <div className="mt-8">
-              <h4 className="text-lg font-semibold mb-4">Newsletter</h4>
-              <form className="flex">
-                <input
-                  type="email"
-                  placeholder="Votre email"
-                  className="px-4 py-2 rounded-l-lg flex-1 bg-agence-gray-700 text-white border-agence-gray-600 focus:outline-none focus:ring-2 focus:ring-agence-orange-400"
-                />
-                <button
-                  type="submit"
-                  className="bg-agence-orange-500 hover:bg-agence-orange-600 text-white px-4 py-2 rounded-r-lg transition-colors"
-                >
-                  S'inscrire
-                </button>
-              </form>
-            </div>
           </div>
         </div>
 
