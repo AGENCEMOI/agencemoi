@@ -31,7 +31,7 @@ const Hero = () => {
             Trouvez le <span className="text-agence-orange-500">cuisiniste idéal</span> pour votre projet
           </h1>
           <p className="text-lg md:text-xl text-agence-gray-200 mb-8 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
-            Comparez jusqu'à trois devis personnalisés et gratuits de professionnels qualifiés pour votre cuisine, bibliothèque ou salle de bain en moins de 24h.
+            Comparez jusqu'à trois devis personnalisés et gratuits de professionnels qualifiés pour votre cuisine, bibliothèque ou salle de bain en 1 à 3 jours ouvrables.
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-slide-in-up" style={{animationDelay: '0.4s'}}>
             <Link 

@@ -55,7 +55,7 @@ const Terms = () => {
               
               <h2 className="text-2xl font-semibold text-agence-gray-800 mt-10 mb-4">6. Engagements des Professionnels</h2>
               <p>
-                Les professionnels partenaires s'engagent à répondre aux demandes de devis dans un délai de 24 heures.
+                Les professionnels partenaires s'engagent à répondre aux demandes de devis dans un délai de 1 à 3 jours ouvrables.
                 Ils garantissent l'exactitude des informations fournies concernant leurs services, produits et promotions.
               </p>
               
@@ -84,7 +84,7 @@ const Terms = () => {
               
               <h2 className="text-2xl font-semibold text-agence-gray-800 mt-10 mb-4">11. Contact</h2>
               <p>
-                Pour toute question concernant les présentes conditions générales, veuillez nous contacter à l'adresse suivante : contact@agencemoi.fr
+                Pour toute question concernant les présentes conditions générales, veuillez nous contacter à l'adresse suivante : agencemoi@gmail.com
               </p>
             </div>
           </div>

@@ -87,7 +87,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="text-agence-orange-500 h-5 w-5" />
-                <span className="text-agence-gray-300">contact@agencemoi.fr</span>
+                <span className="text-agence-gray-300">agencemoi@gmail.com</span>
               </li>
             </ul>
             <div className="mt-8">

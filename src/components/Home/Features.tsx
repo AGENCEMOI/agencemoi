@@ -6,8 +6,8 @@ const Features = () => {
   const features = [
     {
       icon: <Clock className="h-12 w-12 text-agence-orange-500" />,
-      title: 'Réponse en 24h',
-      description: "Recevez jusqu'à trois devis personnalisés et détaillés de professionnels qualifiés en moins de 24 heures."
+      title: 'Réponse en 1 à 3 jours ouvrables',
+      description: "Recevez jusqu'à trois devis personnalisés et détaillés de professionnels qualifiés en 1 à 3 jours ouvrables."
     },
     {
       icon: <Users className="h-12 w-12 text-agence-orange-500" />,

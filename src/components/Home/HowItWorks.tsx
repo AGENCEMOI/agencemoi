@@ -18,7 +18,7 @@ const HowItWorks = () => {
     {
       icon: <Clock className="h-16 w-16 text-white" />,
       title: "Recevez vos devis",
-      description: "Jusqu'à trois professionnels vous contactent en moins de 24h avec des propositions personnalisées."
+      description: "Jusqu'à trois professionnels vous contactent en 1 à 3 jours ouvrables avec des propositions personnalisées."
     }
   ];
 
