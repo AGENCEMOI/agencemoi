@@ -2,6 +2,13 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Info } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const RegistrationForm = () => {
   const { toast } = useToast();
@@ -26,6 +33,7 @@ const RegistrationForm = () => {
     cardCvv: '',
     bankName: '',
     bankIban: '',
+    bankPaymentDate: '5', // Default to 5th of month
     termsAccepted: false,
   });
   const [submitted, setSubmitted] = useState(false);
@@ -422,6 +430,29 @@ const RegistrationForm = () => {
                 className="input-field w-full"
                 placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
               />
+            </div>
+            
+            <div>
+              <label htmlFor="bankPaymentDate" className="form-label">Date de prélèvement mensuel <span className="text-red-500">*</span></label>
+              <Select
+                name="bankPaymentDate"
+                value={formData.bankPaymentDate}
+                onValueChange={(value) => 
+                  setFormData({
+                    ...formData,
+                    bankPaymentDate: value
+                  })
+                }
+              >
+                <SelectTrigger className="w-full input-field">
+                  <SelectValue placeholder="Choisir une date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">Le 5 du mois</SelectItem>
+                  <SelectItem value="15">Le 15 du mois</SelectItem>
+                  <SelectItem value="30">Le 30 du mois</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
