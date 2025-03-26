@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -65,12 +65,8 @@ const Footer = () => {
                 </span>
               </li>
               <li className="flex items-center space-x-3">
-                <Phone className="text-agence-orange-500 h-5 w-5" />
-                <span className="text-agence-gray-300">+33 1 23 45 67 89</span>
-              </li>
-              <li className="flex items-center space-x-3">
                 <Mail className="text-agence-orange-500 h-5 w-5" />
-                <span className="text-agence-gray-300">agencemoi@gmail.com</span>
+                <span className="text-agence-gray-300">123.agencemoi@gmail.com</span>
               </li>
             </ul>
           </div>

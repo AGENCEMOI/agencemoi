@@ -25,13 +25,6 @@ const HowItWorks = () => {
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="section-title">Comment ça fonctionne</h2>
-          <p className="section-subtitle">
-            Notre processus simple vous permet d'obtenir rapidement des devis personnalisés pour votre projet d'aménagement intérieur.
-          </p>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {steps.map((step, index) => (
             <div key={index} className="flex flex-col items-center animate-fade-in" style={{animationDelay: `${index * 0.2}s`}}>

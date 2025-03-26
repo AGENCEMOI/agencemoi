@@ -84,7 +84,7 @@ const Terms = () => {
               
               <h2 className="text-2xl font-semibold text-agence-gray-800 mt-10 mb-4">11. Contact</h2>
               <p>
-                Pour toute question concernant les présentes conditions générales, veuillez nous contacter à l'adresse suivante : agencemoi@gmail.com
+                Pour toute question concernant les présentes conditions générales, veuillez nous contacter à l'adresse suivante : 123.agencemoi@gmail.com ou par téléphone au +33 1 23 45 67 89.
               </p>
             </div>
           </div>

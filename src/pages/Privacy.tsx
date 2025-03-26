@@ -99,7 +99,7 @@ const Privacy = () => {
                 <li>Droit d'introduire une réclamation auprès d'une autorité de contrôle</li>
               </ul>
               <p>
-                Pour exercer ces droits, veuillez nous contacter à l'adresse email suivante : agencemoi@gmail.com
+                Pour exercer ces droits, veuillez nous contacter à l'adresse email suivante : 123.agencemoi@gmail.com ou par téléphone au +33 1 23 45 67 89.
               </p>
               
               <h2 className="text-2xl font-semibold text-agence-gray-800 mt-10 mb-4">7. Cookies</h2>
@@ -116,7 +116,7 @@ const Privacy = () => {
               
               <h2 className="text-2xl font-semibold text-agence-gray-800 mt-10 mb-4">9. Contact</h2>
               <p>
-                Si vous avez des questions concernant cette politique de confidentialité, veuillez nous contacter à l'adresse suivante : agencemoi@gmail.com
+                Si vous avez des questions concernant cette politique de confidentialité, veuillez nous contacter à l'adresse suivante : 123.agencemoi@gmail.com ou par téléphone au +33 1 23 45 67 89.
               </p>
             </div>
           </div>
