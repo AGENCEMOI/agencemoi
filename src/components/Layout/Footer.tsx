@@ -61,7 +61,7 @@ const Footer = () => {
               <li className="flex items-start space-x-3">
                 <MapPin className="text-agence-orange-500 h-5 w-5 mt-1" />
                 <span className="text-agence-gray-300">
-                  Gerbezet 73610 Attignat-oncin, France
+                  73610 Attignat-oncin, France
                 </span>
               </li>
               <li className="flex items-center space-x-3">
