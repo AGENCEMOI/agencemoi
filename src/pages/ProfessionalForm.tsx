@@ -62,6 +62,19 @@ const ProfessionalForm = () => {
             </div>
           </div>
           
+          <div className="bg-agence-gray-50 p-6 rounded-xl border border-agence-gray-200 mb-16">
+            <h2 className="text-2xl font-semibold text-agence-gray-800 mb-4">Zone de couverture</h2>
+            <p className="text-agence-gray-600 mb-4">
+              Nos clients sont mis en relation avec des professionnels qualifiés dans leur code postal ou dans un rayon de 20km.
+              Cela garantit que vous recevrez des demandes pertinentes et localisées près de votre zone d'activité.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <span className="inline-block px-3 py-1 bg-agence-orange-100 text-agence-orange-700 rounded-full text-sm">Même code postal</span>
+              <span className="inline-block px-3 py-1 bg-agence-orange-100 text-agence-orange-700 rounded-full text-sm">Rayon de 20km</span>
+              <span className="inline-block px-3 py-1 bg-agence-orange-100 text-agence-orange-700 rounded-full text-sm">Mise en relation locale</span>
+            </div>
+          </div>
+          
           <RegistrationForm />
         </div>
       </main>

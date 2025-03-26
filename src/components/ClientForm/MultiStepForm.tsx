@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import StepIndicator from '@/components/ui/StepIndicator';
-import { ArrowLeft, ArrowRight, Upload, Info, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, Info, Check, MapPin } from 'lucide-react';
 import { 
   Select,
   SelectContent,
@@ -19,28 +19,53 @@ import {
 } from "@/components/ui/form";
 
 const mockProfessionals = [
-  { id: 1, name: 'Cuisines Modernes', specialty: 'Cuisine', rating: 4.8, postalCode: '75001', city: 'Paris' },
-  { id: 2, name: 'Déco Intérieure', specialty: 'Aménagement', rating: 4.6, postalCode: '75002', city: 'Paris' },
-  { id: 3, name: 'Salles de Bain Élégantes', specialty: 'Salle de bain', rating: 4.9, postalCode: '75003', city: 'Paris' },
-  { id: 4, name: 'Concept Rangement', specialty: 'Dressing', rating: 4.7, postalCode: '75004', city: 'Paris' },
-  { id: 5, name: 'Cuisines & Co', specialty: 'Cuisine', rating: 4.5, postalCode: '75005', city: 'Paris' },
-  { id: 6, name: 'Habitat Design', specialty: 'Aménagement', rating: 4.8, postalCode: '75006', city: 'Paris' },
-  { id: 7, name: 'L\'Atelier Cuisine', specialty: 'Cuisine', rating: 4.9, postalCode: '75007', city: 'Paris' },
-  { id: 8, name: 'Bain & Déco', specialty: 'Salle de bain', rating: 4.6, postalCode: '75008', city: 'Paris' },
-  { id: 9, name: 'Lyon Cuisines', specialty: 'Cuisine', rating: 4.7, postalCode: '69001', city: 'Lyon' },
-  { id: 10, name: 'Espace Rangement', specialty: 'Dressing', rating: 4.8, postalCode: '69002', city: 'Lyon' },
-  { id: 11, name: 'Meubles Sur Mesure', specialty: 'Aménagement', rating: 4.9, postalCode: '69003', city: 'Lyon' },
-  { id: 12, name: 'Cuisines Élégance', specialty: 'Cuisine', rating: 4.5, postalCode: '69004', city: 'Lyon' },
-  { id: 13, name: 'Marseille Déco', specialty: 'Aménagement', rating: 4.8, postalCode: '13001', city: 'Marseille' },
-  { id: 14, name: 'Ambiance Bain', specialty: 'Salle de bain', rating: 4.6, postalCode: '13002', city: 'Marseille' },
-  { id: 15, name: 'Concept Cuisine', specialty: 'Cuisine', rating: 4.7, postalCode: '13003', city: 'Marseille' },
+  { id: 1, name: 'Cuisines Modernes', specialty: 'Cuisine', rating: 4.8, postalCode: '75001', city: 'Paris', lat: 48.8566, lng: 2.3522, distance: 0 },
+  { id: 2, name: 'Déco Intérieure', specialty: 'Aménagement', rating: 4.6, postalCode: '75002', city: 'Paris', lat: 48.8650, lng: 2.3428, distance: 0 },
+  { id: 3, name: 'Salles de Bain Élégantes', specialty: 'Salle de bain', rating: 4.9, postalCode: '75003', city: 'Paris', lat: 48.8615, lng: 2.3588, distance: 0 },
+  { id: 4, name: 'Concept Rangement', specialty: 'Dressing', rating: 4.7, postalCode: '75004', city: 'Paris', lat: 48.8543, lng: 2.3527, distance: 0 },
+  { id: 5, name: 'Cuisines & Co', specialty: 'Cuisine', rating: 4.5, postalCode: '75005', city: 'Paris', lat: 48.8448, lng: 2.3495, distance: 0 },
+  { id: 6, name: 'Habitat Design', specialty: 'Aménagement', rating: 4.8, postalCode: '75006', city: 'Paris', lat: 48.8495, lng: 2.3364, distance: 0 },
+  { id: 7, name: 'L\'Atelier Cuisine', specialty: 'Cuisine', rating: 4.9, postalCode: '75007', city: 'Paris', lat: 48.8560, lng: 2.3265, distance: 0 },
+  { id: 8, name: 'Bain & Déco', specialty: 'Salle de bain', rating: 4.6, postalCode: '75008', city: 'Paris', lat: 48.8729, lng: 2.3138, distance: 0 },
+  { id: 9, name: 'Lyon Cuisines', specialty: 'Cuisine', rating: 4.7, postalCode: '69001', city: 'Lyon', lat: 45.7640, lng: 4.8357, distance: 0 },
+  { id: 10, name: 'Espace Rangement', specialty: 'Dressing', rating: 4.8, postalCode: '69002', city: 'Lyon', lat: 45.7543, lng: 4.8316, distance: 0 },
+  { id: 11, name: 'Meubles Sur Mesure', specialty: 'Aménagement', rating: 4.9, postalCode: '69003', city: 'Lyon', lat: 45.7563, lng: 4.8415, distance: 0 },
+  { id: 12, name: 'Cuisines Élégance', specialty: 'Cuisine', rating: 4.5, postalCode: '69004', city: 'Lyon', lat: 45.7734, lng: 4.8282, distance: 0 },
+  { id: 13, name: 'Marseille Déco', specialty: 'Aménagement', rating: 4.8, postalCode: '13001', city: 'Marseille', lat: 43.2965, lng: 5.3698, distance: 0 },
+  { id: 14, name: 'Ambiance Bain', specialty: 'Salle de bain', rating: 4.6, postalCode: '13002', city: 'Marseille', lat: 43.3038, lng: 5.3651, distance: 0 },
+  { id: 15, name: 'Concept Cuisine', specialty: 'Cuisine', rating: 4.7, postalCode: '13003', city: 'Marseille', lat: 43.3101, lng: 5.3724, distance: 0 },
 ];
+
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c;
+  return distance;
+};
+
+const postalCodeCoordinates = {
+  '75': { lat: 48.8566, lng: 2.3522 },
+  '69': { lat: 45.7640, lng: 4.8357 },
+  '13': { lat: 43.2965, lng: 5.3698 },
+  '33': { lat: 44.8378, lng: -0.5795 },
+  '59': { lat: 50.6292, lng: 3.0573 },
+  '67': { lat: 48.5734, lng: 7.7521 },
+  '31': { lat: 43.6045, lng: 1.4442 },
+  '44': { lat: 47.2184, lng: -1.5536 },
+  '06': { lat: 43.7102, lng: 7.2620 },
+  '63': { lat: 45.7772, lng: 3.0870 },
+};
 
 const MultiStepForm = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
-    // Personal information
     firstName: '',
     lastName: '',
     phone: '',
@@ -48,8 +73,6 @@ const MultiStepForm = () => {
     address: '',
     postalCode: '',
     city: '',
-    
-    // Project details
     projectType: '',
     buildingType: '',
     floor: '',
@@ -58,8 +81,6 @@ const MultiStepForm = () => {
     surface: '',
     startDate: '',
     budget: '',
-    
-    // Specific requirements
     furniture: {
       colors: '',
       handles: false
@@ -69,31 +90,62 @@ const MultiStepForm = () => {
     faucet: '',
     appliances: '',
     layoutNeeds: '',
-    
-    // Files
     floorPlan: null,
     photos: [],
-
-    // Selected professionals
     selectedProfessionals: []
   });
 
   const [localProfessionals, setLocalProfessionals] = useState([]);
   const [selectedCount, setSelectedCount] = useState(0);
+  const [proximity, setProximity] = useState('both');
 
   useEffect(() => {
-    // In a real app, this would be an API call filtering by the postal code
     if (formData.postalCode) {
-      // Get the first two digits of postal code to simulate filtering by department
-      const postalPrefix = formData.postalCode.substring(0, 2);
-      const filtered = mockProfessionals.filter(pro => 
-        pro.postalCode.startsWith(postalPrefix)
-      );
-      
-      // If no professionals found in the area, show all as fallback
-      setLocalProfessionals(filtered.length > 0 ? filtered : mockProfessionals);
+      try {
+        const departmentCode = formData.postalCode.substring(0, 2);
+        let userCoords = postalCodeCoordinates[departmentCode];
+        
+        if (!userCoords) {
+          userCoords = { lat: 48.8566, lng: 2.3522 };
+        }
+        
+        const professionalsWithDistance = mockProfessionals.map(pro => {
+          const distance = calculateDistance(
+            userCoords.lat, 
+            userCoords.lng, 
+            pro.lat, 
+            pro.lng
+          );
+          
+          return { ...pro, distance: parseFloat(distance.toFixed(1)) };
+        });
+        
+        let filtered = [];
+        
+        if (proximity === 'postcode' || proximity === 'both') {
+          const samePostcodeItems = professionalsWithDistance.filter(pro => 
+            pro.postalCode.startsWith(departmentCode)
+          );
+          filtered = [...filtered, ...samePostcodeItems];
+        }
+        
+        if (proximity === 'radius' || proximity === 'both') {
+          const radiusItems = professionalsWithDistance.filter(pro => 
+            pro.distance <= 20 && 
+            !filtered.some(item => item.id === pro.id)
+          );
+          filtered = [...filtered, ...radiusItems];
+        }
+        
+        filtered.sort((a, b) => a.distance - b.distance);
+        
+        setLocalProfessionals(filtered.length > 0 ? filtered : mockProfessionals);
+      } catch (error) {
+        console.error("Error filtering professionals:", error);
+        setLocalProfessionals(mockProfessionals);
+      }
     }
-  }, [formData.postalCode, currentStep]);
+  }, [formData.postalCode, proximity, currentStep]);
 
   useEffect(() => {
     setSelectedCount(formData.selectedProfessionals.length);
@@ -111,7 +163,6 @@ const MultiStepForm = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Handle nested objects like furniture.colors
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
@@ -132,7 +183,6 @@ const MultiStepForm = () => {
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     
-    // Handle nested objects
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
@@ -160,7 +210,6 @@ const MultiStepForm = () => {
         floorPlan: files[0]
       });
     } else if (fieldName === 'photos') {
-      // Limit to 3 photos
       const selectedPhotos = Array.from(files).slice(0, 3);
       setFormData({
         ...formData,
@@ -175,10 +224,8 @@ const MultiStepForm = () => {
       let newSelection;
 
       if (isSelected) {
-        // Remove from selection
         newSelection = prevData.selectedProfessionals.filter(id => id !== professionalId);
       } else {
-        // Add to selection, but limit to 5
         if (prevData.selectedProfessionals.length < 5) {
           newSelection = [...prevData.selectedProfessionals, professionalId];
         } else {
@@ -198,8 +245,11 @@ const MultiStepForm = () => {
     });
   };
 
+  const handleProximityChange = (value) => {
+    setProximity(value);
+  };
+
   const nextStep = () => {
-    // Validate minimum number of professionals selected before proceeding to confirmation
     if (currentStep === 4 && formData.selectedProfessionals.length < 3) {
       toast({
         title: "Sélection requise",
@@ -226,13 +276,11 @@ const MultiStepForm = () => {
     e.preventDefault();
     console.log('Form submitted:', formData);
     
-    // Show success message
     toast({
       title: "Demande envoyée !",
       description: "Votre demande de devis a été envoyée avec succès. Vous recevrez une réponse sous 24h.",
     });
     
-    // Reset form or redirect
     setTimeout(() => {
       window.location.href = '/';
     }, 3000);
@@ -689,6 +737,45 @@ const MultiStepForm = () => {
         </div>
       </div>
       
+      <div className="mb-6">
+        <label htmlFor="proximityFilter" className="form-label">Filtrer par proximité</label>
+        <div className="grid grid-cols-3 gap-2 mt-2">
+          <button
+            type="button"
+            onClick={() => handleProximityChange('postcode')}
+            className={`py-2 px-3 rounded-md border text-sm font-medium ${
+              proximity === 'postcode' 
+                ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' 
+                : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
+            }`}
+          >
+            Même code postal
+          </button>
+          <button
+            type="button"
+            onClick={() => handleProximityChange('radius')}
+            className={`py-2 px-3 rounded-md border text-sm font-medium ${
+              proximity === 'radius' 
+                ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' 
+                : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
+            }`}
+          >
+            Rayon de 20km
+          </button>
+          <button
+            type="button"
+            onClick={() => handleProximityChange('both')}
+            className={`py-2 px-3 rounded-md border text-sm font-medium ${
+              proximity === 'both' 
+                ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' 
+                : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
+            }`}
+          >
+            Les deux
+          </button>
+        </div>
+      </div>
+      
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-lg font-medium text-agence-gray-800">
           Professionnels dans votre secteur
@@ -717,7 +804,12 @@ const MultiStepForm = () => {
                     <h5 className="font-semibold text-agence-gray-800">{professional.name}</h5>
                     <div className="text-sm text-agence-gray-600 mt-1">
                       <span className="inline-block mr-4">{professional.specialty}</span>
-                      <span className="inline-block mr-4">{professional.city} ({professional.postalCode})</span>
+                      <span className="inline-block mr-4">
+                        <span className="inline-flex items-center">
+                          <MapPin size={14} className="mr-1 text-agence-gray-500" />
+                          {professional.city} ({professional.postalCode})
+                        </span>
+                      </span>
                       <span className="inline-flex items-center">
                         <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -725,6 +817,11 @@ const MultiStepForm = () => {
                         {professional.rating}
                       </span>
                     </div>
+                    {professional.distance > 0 && (
+                      <div className="mt-1 inline-block px-2 py-1 bg-agence-gray-100 text-agence-gray-700 text-xs rounded-md">
+                        {professional.distance} km
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
