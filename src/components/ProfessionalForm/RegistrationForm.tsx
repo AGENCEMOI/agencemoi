@@ -20,23 +20,22 @@ const RegistrationForm = () => {
     postalCode: '',
     city: '',
     contactName: '',
-    contactPhone: '',
-    contactEmail: '',
+    contactPhone: '0661461681', // Default phone number
+    contactEmail: '123.agencemoi@gmail.com', // Default email
     website: '',
     origin: '',
     averagePrice: '',
     entityType: '',
     currentPromotions: '',
-    paymentMethod: 'card',
-    cardNumber: '',
-    cardExpiry: '',
-    cardCvv: '',
+    paymentMethod: 'bank', // Default to bank (SEPA) only
     bankName: '',
     bankIban: '',
     bankPaymentDate: '5', // Default to 5th of month
     termsAccepted: false,
+    sepaMandate: false, // New field for SEPA mandate
   });
   const [submitted, setSubmitted] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -44,6 +43,14 @@ const RegistrationForm = () => {
       ...formData,
       [name]: value
     });
+    
+    // Clear error for changed field
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: null
+      });
+    }
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,9 +59,57 @@ const RegistrationForm = () => {
       ...formData,
       [name]: checked
     });
+    
+    // Clear error for changed field
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: null
+      });
+    }
+  };
+
+  const validateStep = (stepNumber) => {
+    const errors = {};
+    
+    // Validate step 1 - Business info
+    if (stepNumber === 1) {
+      if (!formData.companyName.trim()) errors.companyName = "Nom de l'entreprise requis";
+      if (!formData.siret.trim()) errors.siret = "Numéro SIRET requis";
+      if (!formData.address.trim()) errors.address = "Adresse requise";
+      if (!formData.postalCode.trim()) errors.postalCode = "Code postal requis";
+      if (!formData.city.trim()) errors.city = "Ville requise";
+      if (!formData.contactName.trim()) errors.contactName = "Personne à contacter requise";
+    }
+    
+    // Validate step 2 - Products info
+    else if (stepNumber === 2) {
+      if (!formData.origin) errors.origin = "Origine de fabrication requise";
+      if (!formData.entityType) errors.entityType = "Type d'entité requis";
+    }
+    
+    // Validate step 3 - Payment info
+    else if (stepNumber === 3) {
+      if (!formData.bankName.trim()) errors.bankName = "Nom de la banque requis";
+      if (!formData.bankIban.trim()) errors.bankIban = "IBAN requis";
+      if (!formData.sepaMandate) errors.sepaMandate = "Mandat SEPA requis";
+      if (!formData.termsAccepted) errors.termsAccepted = "Vous devez accepter les conditions générales";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const nextStep = () => {
+    if (!validateStep(step)) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez remplir tous les champs obligatoires pour continuer.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (step < 3) {
       setStep(step + 1);
       window.scrollTo(0, 0);
@@ -69,6 +124,16 @@ const RegistrationForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateStep(step)) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez remplir tous les champs obligatoires pour continuer.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     console.log('Professional form submitted:', formData);
     
     setSubmitted(true);
@@ -93,9 +158,10 @@ const RegistrationForm = () => {
             value={formData.companyName}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.companyName ? 'border-red-500' : ''}`}
             placeholder="Raison sociale"
           />
+          {formErrors.companyName && <p className="text-red-500 text-sm mt-1">{formErrors.companyName}</p>}
         </div>
         
         <div className="md:col-span-2">
@@ -107,9 +173,10 @@ const RegistrationForm = () => {
             value={formData.siret}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.siret ? 'border-red-500' : ''}`}
             placeholder="14 chiffres"
           />
+          {formErrors.siret && <p className="text-red-500 text-sm mt-1">{formErrors.siret}</p>}
         </div>
         
         <div className="md:col-span-2">
@@ -121,9 +188,10 @@ const RegistrationForm = () => {
             value={formData.address}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.address ? 'border-red-500' : ''}`}
             placeholder="Adresse de l'entreprise"
           />
+          {formErrors.address && <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>}
         </div>
         
         <div>
@@ -135,9 +203,10 @@ const RegistrationForm = () => {
             value={formData.postalCode}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.postalCode ? 'border-red-500' : ''}`}
             placeholder="Code postal"
           />
+          {formErrors.postalCode && <p className="text-red-500 text-sm mt-1">{formErrors.postalCode}</p>}
         </div>
         
         <div>
@@ -149,9 +218,10 @@ const RegistrationForm = () => {
             value={formData.city}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.city ? 'border-red-500' : ''}`}
             placeholder="Ville"
           />
+          {formErrors.city && <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>}
         </div>
         
         <div className="md:col-span-2">
@@ -163,9 +233,10 @@ const RegistrationForm = () => {
             value={formData.contactName}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.contactName ? 'border-red-500' : ''}`}
             placeholder="Nom et prénom"
           />
+          {formErrors.contactName && <p className="text-red-500 text-sm mt-1">{formErrors.contactName}</p>}
         </div>
         
         <div>
@@ -175,9 +246,8 @@ const RegistrationForm = () => {
             id="contactPhone"
             name="contactPhone"
             value={formData.contactPhone}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
+            readOnly
+            className="input-field w-full bg-gray-100"
             placeholder="Numéro de téléphone"
           />
         </div>
@@ -189,9 +259,8 @@ const RegistrationForm = () => {
             id="contactEmail"
             name="contactEmail"
             value={formData.contactEmail}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
+            readOnly
+            className="input-field w-full bg-gray-100"
             placeholder="Adresse email"
           />
         </div>
@@ -225,7 +294,7 @@ const RegistrationForm = () => {
             value={formData.origin}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.origin ? 'border-red-500' : ''}`}
           >
             <option value="">Sélectionnez</option>
             <option value="france">Française</option>
@@ -234,25 +303,21 @@ const RegistrationForm = () => {
             <option value="italy">Italienne</option>
             <option value="other">Autre</option>
           </select>
+          {formErrors.origin && <p className="text-red-500 text-sm mt-1">{formErrors.origin}</p>}
         </div>
         
         <div>
           <label htmlFor="averagePrice" className="form-label">Budget moyen des paniers <span className="text-red-500">*</span></label>
-          <select
+          <input
+            type="text"
             id="averagePrice"
             name="averagePrice"
             value={formData.averagePrice}
             onChange={handleInputChange}
             required
             className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="less5k">Moins de 5 000 €</option>
-            <option value="5kTo10k">5 000 € à 10 000 €</option>
-            <option value="10kTo15k">10 000 € à 15 000 €</option>
-            <option value="15kTo20k">15 000 € à 20 000 €</option>
-            <option value="more20k">Plus de 20 000 €</option>
-          </select>
+            placeholder="Indiquez le budget moyen de vos paniers"
+          />
         </div>
         
         <div>
@@ -263,7 +328,7 @@ const RegistrationForm = () => {
             value={formData.entityType}
             onChange={handleInputChange}
             required
-            className="input-field w-full"
+            className={`input-field w-full ${formErrors.entityType ? 'border-red-500' : ''}`}
           >
             <option value="">Sélectionnez</option>
             <option value="brand">Enseigne</option>
@@ -271,6 +336,7 @@ const RegistrationForm = () => {
             <option value="factory">Magasin d'usine</option>
             <option value="other">Autre</option>
           </select>
+          {formErrors.entityType && <p className="text-red-500 text-sm mt-1">{formErrors.entityType}</p>}
         </div>
         
         <div>
@@ -317,145 +383,87 @@ const RegistrationForm = () => {
       </div>
       
       <div>
-        <h4 className="text-lg font-semibold text-agence-gray-800 mb-4">Choisissez votre méthode de paiement</h4>
+        <h4 className="text-lg font-semibold text-agence-gray-800 mb-4">Prélèvement bancaire SEPA</h4>
         
-        <div className="space-y-4 mb-6">
-          <div className="flex items-center space-x-3">
+        <div className="animate-fade-in space-y-4 p-5 border border-agence-gray-200 rounded-lg">
+          <div>
+            <label htmlFor="bankName" className="form-label">Nom de la banque <span className="text-red-500">*</span></label>
             <input
-              type="radio"
-              id="paymentMethodCard"
-              name="paymentMethod"
-              value="card"
-              checked={formData.paymentMethod === 'card'}
+              type="text"
+              id="bankName"
+              name="bankName"
+              value={formData.bankName}
               onChange={handleInputChange}
-              className="w-5 h-5 text-agence-orange-500"
+              required
+              className={`input-field w-full ${formErrors.bankName ? 'border-red-500' : ''}`}
+              placeholder="Nom de votre banque"
             />
-            <label htmlFor="paymentMethodCard" className="text-agence-gray-800 font-medium">
-              Carte bancaire
-            </label>
+            {formErrors.bankName && <p className="text-red-500 text-sm mt-1">{formErrors.bankName}</p>}
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div>
+            <label htmlFor="bankIban" className="form-label">IBAN <span className="text-red-500">*</span></label>
             <input
-              type="radio"
-              id="paymentMethodBank"
-              name="paymentMethod"
-              value="bank"
-              checked={formData.paymentMethod === 'bank'}
+              type="text"
+              id="bankIban"
+              name="bankIban"
+              value={formData.bankIban}
               onChange={handleInputChange}
-              className="w-5 h-5 text-agence-orange-500"
+              required
+              className={`input-field w-full ${formErrors.bankIban ? 'border-red-500' : ''}`}
+              placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
             />
-            <label htmlFor="paymentMethodBank" className="text-agence-gray-800 font-medium">
-              Prélèvement bancaire
-            </label>
+            {formErrors.bankIban && <p className="text-red-500 text-sm mt-1">{formErrors.bankIban}</p>}
+          </div>
+          
+          <div>
+            <label htmlFor="bankPaymentDate" className="form-label">Date de prélèvement mensuel <span className="text-red-500">*</span></label>
+            <Select
+              name="bankPaymentDate"
+              value={formData.bankPaymentDate}
+              onValueChange={(value) => 
+                setFormData({
+                  ...formData,
+                  bankPaymentDate: value
+                })
+              }
+            >
+              <SelectTrigger className="w-full input-field">
+                <SelectValue placeholder="Choisir une date" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">Le 5 du mois</SelectItem>
+                <SelectItem value="15">Le 15 du mois</SelectItem>
+                <SelectItem value="30">Le 30 du mois</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="mt-4 p-4 bg-agence-orange-50 border border-agence-orange-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                id="sepaMandate"
+                name="sepaMandate"
+                checked={formData.sepaMandate}
+                onChange={handleCheckboxChange}
+                required
+                className={`w-5 h-5 text-agence-orange-500 mt-1 ${formErrors.sepaMandate ? 'border-red-500' : ''}`}
+              />
+              <div>
+                <label htmlFor="sepaMandate" className="text-agence-gray-800 font-medium">
+                  Mandat de prélèvement SEPA <span className="text-red-500">*</span>
+                </label>
+                <p className="text-sm text-agence-gray-600 mt-1">
+                  En cochant cette case, j'autorise AGENCEMOI à envoyer des instructions à ma banque pour débiter mon compte, 
+                  et ma banque à débiter mon compte conformément aux instructions d'AGENCEMOI. Je bénéficie d'un droit à remboursement 
+                  par ma banque selon les conditions décrites dans la convention que j'ai passée avec elle.
+                </p>
+                {formErrors.sepaMandate && <p className="text-red-500 text-sm mt-1">{formErrors.sepaMandate}</p>}
+              </div>
+            </div>
           </div>
         </div>
-        
-        {formData.paymentMethod === 'card' && (
-          <div className="animate-fade-in space-y-4 p-5 border border-agence-gray-200 rounded-lg">
-            <div>
-              <label htmlFor="cardNumber" className="form-label">Numéro de carte <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                id="cardNumber"
-                name="cardNumber"
-                value={formData.cardNumber}
-                onChange={handleInputChange}
-                required={formData.paymentMethod === 'card'}
-                className="input-field w-full"
-                placeholder="XXXX XXXX XXXX XXXX"
-                maxLength={19}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="cardExpiry" className="form-label">Date d'expiration <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  id="cardExpiry"
-                  name="cardExpiry"
-                  value={formData.cardExpiry}
-                  onChange={handleInputChange}
-                  required={formData.paymentMethod === 'card'}
-                  className="input-field w-full"
-                  placeholder="MM/AA"
-                  maxLength={5}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="cardCvv" className="form-label">CVV <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  id="cardCvv"
-                  name="cardCvv"
-                  value={formData.cardCvv}
-                  onChange={handleInputChange}
-                  required={formData.paymentMethod === 'card'}
-                  className="input-field w-full"
-                  placeholder="XXX"
-                  maxLength={3}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {formData.paymentMethod === 'bank' && (
-          <div className="animate-fade-in space-y-4 p-5 border border-agence-gray-200 rounded-lg">
-            <div>
-              <label htmlFor="bankName" className="form-label">Nom de la banque <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                id="bankName"
-                name="bankName"
-                value={formData.bankName}
-                onChange={handleInputChange}
-                required={formData.paymentMethod === 'bank'}
-                className="input-field w-full"
-                placeholder="Nom de votre banque"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="bankIban" className="form-label">IBAN <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                id="bankIban"
-                name="bankIban"
-                value={formData.bankIban}
-                onChange={handleInputChange}
-                required={formData.paymentMethod === 'bank'}
-                className="input-field w-full"
-                placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="bankPaymentDate" className="form-label">Date de prélèvement mensuel <span className="text-red-500">*</span></label>
-              <Select
-                name="bankPaymentDate"
-                value={formData.bankPaymentDate}
-                onValueChange={(value) => 
-                  setFormData({
-                    ...formData,
-                    bankPaymentDate: value
-                  })
-                }
-              >
-                <SelectTrigger className="w-full input-field">
-                  <SelectValue placeholder="Choisir une date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">Le 5 du mois</SelectItem>
-                  <SelectItem value="15">Le 15 du mois</SelectItem>
-                  <SelectItem value="30">Le 30 du mois</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
         
         <div className="mt-8">
           <div className="flex items-start space-x-3">
@@ -466,7 +474,7 @@ const RegistrationForm = () => {
               checked={formData.termsAccepted}
               onChange={handleCheckboxChange}
               required
-              className="w-5 h-5 text-agence-orange-500 mt-1"
+              className={`w-5 h-5 text-agence-orange-500 mt-1 ${formErrors.termsAccepted ? 'border-red-500' : ''}`}
             />
             <label htmlFor="termsAccepted" className="text-agence-gray-700">
               J'accepte les <a href="/terms" className="text-agence-orange-500 hover:underline">conditions générales</a>, 
@@ -474,6 +482,7 @@ const RegistrationForm = () => {
               j'autorise AGENCEMOI à prélever les frais de mise en relation selon les conditions décrites ci-dessus.
             </label>
           </div>
+          {formErrors.termsAccepted && <p className="text-red-500 text-sm mt-1 ml-8">{formErrors.termsAccepted}</p>}
         </div>
       </div>
     </div>
@@ -519,7 +528,8 @@ const RegistrationForm = () => {
             className={`flex-1 text-center py-4 px-2 font-medium ${
               step === 1 ? 'text-agence-orange-500 border-b-2 border-agence-orange-500' : 'text-agence-gray-500'
             }`}
-            onClick={() => setStep(1)}
+            onClick={() => step >= 1 && setStep(1)}
+            disabled={step < 1}
           >
             1. Entreprise
           </button>
@@ -527,7 +537,8 @@ const RegistrationForm = () => {
             className={`flex-1 text-center py-4 px-2 font-medium ${
               step === 2 ? 'text-agence-orange-500 border-b-2 border-agence-orange-500' : 'text-agence-gray-500'
             }`}
-            onClick={() => setStep(2)}
+            onClick={() => step >= 2 && setStep(2)}
+            disabled={step < 2}
           >
             2. Produits
           </button>
@@ -535,7 +546,8 @@ const RegistrationForm = () => {
             className={`flex-1 text-center py-4 px-2 font-medium ${
               step === 3 ? 'text-agence-orange-500 border-b-2 border-agence-orange-500' : 'text-agence-gray-500'
             }`}
-            onClick={() => setStep(3)}
+            onClick={() => step >= 3 && setStep(3)}
+            disabled={step < 3}
           >
             3. Paiement
           </button>
@@ -583,3 +595,4 @@ const RegistrationForm = () => {
 };
 
 export default RegistrationForm;
+
