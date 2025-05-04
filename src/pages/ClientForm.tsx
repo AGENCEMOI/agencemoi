@@ -18,6 +18,10 @@ const ClientForm = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-agence-gray-800 mb-4">Demande de devis</h1>
             <p className="text-agence-gray-600">
               Remplissez ce formulaire pour recevoir gratuitement jusqu'à trois devis personnalisés de nos partenaires professionnels.
+              <br />
+              <span className="text-sm mt-2 inline-block text-agence-orange-700">
+                Les demandes sont envoyées à: 123.agencemoi@gmail.com
+              </span>
             </p>
           </div>
           

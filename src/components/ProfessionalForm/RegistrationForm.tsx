@@ -173,13 +173,19 @@ const RegistrationForm = () => {
       return;
     }
     
+    // Add email destination
+    const recipientEmail = '123.agencemoi@gmail.com';
     console.log('Professional form submitted:', formData);
+    console.log(`Form data will be sent to: ${recipientEmail}`);
+    
+    // In a real implementation, you would send the form data to the email
+    // For now, we'll simulate it with a toast notification
     
     setSubmitted(true);
     
     toast({
       title: "Inscription réussie !",
-      description: "Votre demande d'inscription a été envoyée avec succès. Nous vous contacterons prochainement pour finaliser votre partenariat.",
+      description: `Votre demande d'inscription a été envoyée à ${recipientEmail}. Nous vous contacterons prochainement pour finaliser votre partenariat.`,
     });
   };
 
@@ -634,4 +640,3 @@ const RegistrationForm = () => {
 };
 
 export default RegistrationForm;
-

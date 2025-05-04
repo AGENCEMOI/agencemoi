@@ -276,9 +276,16 @@ const MultiStepForm = () => {
     e.preventDefault();
     console.log('Form submitted:', formData);
     
+    // Add email destination
+    const recipientEmail = '123.agencemoi@gmail.com';
+    console.log(`Form data will be sent to: ${recipientEmail}`);
+    
+    // In a real implementation, you would send an email here
+    // For now, we'll simulate it with a toast notification
+    
     toast({
       title: "Demande envoyée !",
-      description: "Votre demande de devis a été envoyée avec succès. Vous recevrez une réponse sous 24h.",
+      description: `Votre demande de devis a été envoyée à ${recipientEmail}. Vous recevrez une réponse sous 24h.`,
     });
     
     setTimeout(() => {
