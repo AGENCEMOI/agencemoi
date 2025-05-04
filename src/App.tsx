@@ -11,6 +11,9 @@ import CommentCaMarche from "./pages/CommentCaMarche";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
+import ClientDashboard from "./pages/ClientDashboard";
+import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +30,12 @@ const App = () => (
           <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          
+          {/* Pages cachées */}
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/client-dashboard" element={<ClientDashboard />} />
+          <Route path="/professional-dashboard" element={<ProfessionalDashboard />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
