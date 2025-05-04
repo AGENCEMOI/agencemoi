@@ -10,10 +10,49 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Define TypeScript interfaces to fix type issues
+interface FormData {
+  companyName: string;
+  siret: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  website: string;
+  origin: string;
+  averagePrice: string;
+  entityType: string;
+  currentPromotions: string;
+  paymentMethod: string;
+  bankName: string;
+  bankIban: string;
+  bankPaymentDate: string;
+  termsAccepted: boolean;
+  sepaMandate: boolean;
+}
+
+interface FormErrors {
+  companyName?: string | null;
+  siret?: string | null;
+  address?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  contactName?: string | null;
+  origin?: string | null;
+  entityType?: string | null;
+  bankName?: string | null;
+  bankIban?: string | null;
+  sepaMandate?: string | null;
+  termsAccepted?: string | null;
+  [key: string]: string | null | undefined;
+}
+
 const RegistrationForm = () => {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     companyName: '',
     siret: '',
     address: '',
@@ -35,7 +74,7 @@ const RegistrationForm = () => {
     sepaMandate: false, // New field for SEPA mandate
   });
   const [submitted, setSubmitted] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,8 +108,8 @@ const RegistrationForm = () => {
     }
   };
 
-  const validateStep = (stepNumber) => {
-    const errors = {};
+  const validateStep = (stepNumber: number) => {
+    const errors: FormErrors = {};
     
     // Validate step 1 - Business info
     if (stepNumber === 1) {
