@@ -116,7 +116,7 @@ const Privacy = () => {
               
               <h2 className="text-2xl font-semibold text-agence-gray-800 mt-10 mb-4">9. Contact</h2>
               <p>
-                Si vous avez des questions concernant cette politique de confidentialité, veuillez nous contacter à l'adresse suivante : 123.agencemoi@gmail.com ou par téléphone au +33 1 23 45 67 89.
+                Si vous avez des questions concernant cette politique de confidentialité, veuillez nous contacter à l'adresse suivante : 123.agencemoi@gmail.com ou par téléphone au 06.61.46.16.81.
               </p>
             </div>
           </div>
