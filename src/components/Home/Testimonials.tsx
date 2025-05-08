@@ -41,8 +41,8 @@ const Testimonials = () => {
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="section-title">Ils nous font confiance</h2>
-          <p className="section-subtitle">
+          <h2 className="text-3xl md:text-4xl font-semibold mb-6 text-agence-gray-800">Ils nous font confiance</h2>
+          <p className="text-lg text-agence-gray-600 mb-12 max-w-3xl mx-auto">
             Découvrez ce que nos clients disent de notre service et de la qualité des professionnels avec qui nous travaillons.
           </p>
         </div>

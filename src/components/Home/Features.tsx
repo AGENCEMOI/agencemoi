@@ -30,8 +30,8 @@ const Features = () => {
     <section className="py-24 bg-agence-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="section-title">Pourquoi choisir AGENCEMOI ?</h2>
-          <p className="section-subtitle">
+          <h2 className="text-3xl md:text-4xl font-semibold mb-6 text-agence-gray-800">Pourquoi choisir AGENCEMOI ?</h2>
+          <p className="text-lg text-agence-gray-600 mb-12 max-w-3xl mx-auto">
             Notre plateforme simplifie votre recherche de professionnels pour vos projets d'aménagement intérieur avec une approche efficace et transparente.
           </p>
         </div>

@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -126,9 +127,9 @@
     @apply text-3xl md:text-4xl font-semibold mb-6 text-agence-gray-800 relative inline-block;
   }
   
+  /* Removing the orange line under section titles */
   .section-title::after {
-    content: '';
-    @apply absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-agence-orange-500 rounded-full;
+    content: none;
   }
   
   .section-subtitle {
