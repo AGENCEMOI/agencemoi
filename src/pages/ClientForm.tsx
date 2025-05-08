@@ -12,7 +12,7 @@ const ClientForm = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow pt-24 pb-16 bg-white">
+      <main className="flex-grow pt-16 pb-16 bg-gradient-to-b from-white to-agence-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-10">
             <h1 className="text-3xl md:text-4xl font-bold text-agence-gray-800 mb-4">Demande de devis</h1>

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -124,7 +123,12 @@
   }
   
   .section-title {
-    @apply text-3xl md:text-4xl font-semibold mb-6 text-agence-gray-800;
+    @apply text-3xl md:text-4xl font-semibold mb-6 text-agence-gray-800 relative inline-block;
+  }
+  
+  .section-title::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-agence-orange-500 rounded-full;
   }
   
   .section-subtitle {
@@ -185,4 +189,50 @@
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.5s, transform 0.5s;
+}
+
+/* Additional styling for cards with borders */
+.feature-card {
+  @apply relative overflow-hidden transition-all duration-300;
+}
+
+.feature-card::before {
+  content: '';
+  @apply absolute top-0 left-0 w-full h-1 bg-agence-orange-500 transform scale-x-0 transition-transform duration-300 origin-left;
+}
+
+.feature-card:hover::before {
+  @apply transform scale-x-100;
+}
+
+/* Testimonial card styling */
+.testimonial-card {
+  @apply relative overflow-hidden;
+}
+
+.testimonial-card::before {
+  content: '"';
+  @apply absolute -top-2 -left-2 text-6xl text-agence-orange-200 opacity-50 font-serif;
+}
+
+/* Floating animation for certain elements */
+.float-animation {
+  animation: floating 4s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Call to action button pulse */
+.cta-pulse {
+  animation: ctaPulse 2s infinite;
+}
+
+@keyframes ctaPulse {
+  0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
 }

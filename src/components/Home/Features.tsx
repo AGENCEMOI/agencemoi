@@ -40,7 +40,7 @@ const Features = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="glass-card p-8 text-center card-hover animate-scale-in"
+              className="bg-white rounded-xl shadow-lg p-8 text-center card-hover animate-scale-in border-t-4 border-agence-orange-500"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex justify-center mb-6">

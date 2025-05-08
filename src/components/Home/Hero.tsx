@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center pt-24 pb-20 overflow-hidden">
+    <section className="relative min-h-[90vh] flex items-center pt-24 pb-20 overflow-hidden">
       {/* Background with gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-agence-gray-900/90 to-agence-gray-800/80 z-0"></div>
       
@@ -25,10 +25,10 @@ const Hero = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl">
           <span className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white text-sm font-medium mb-6 animate-fade-in">
-            Simplifiez vos projets d'aménagement intérieur
+            Trouvez le meilleur cuisiniste près de chez vous
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight animate-slide-in-up">
-            Trouvez le <span className="text-agence-orange-500">cuisiniste idéal</span> pour votre projet
+            Des <span className="text-agence-orange-500">cuisinistes qualifiés</span> pour votre projet sur mesure
           </h1>
           <p className="text-lg md:text-xl text-agence-gray-200 mb-8 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
             Comparez jusqu'à trois devis personnalisés et gratuits de professionnels qualifiés pour votre cuisine, bibliothèque ou salle de bain en 1 à 3 jours ouvrables.
@@ -38,7 +38,7 @@ const Hero = () => {
               to="/client-form" 
               className="btn-primary flex items-center justify-center space-x-2 text-lg py-3 px-8"
             >
-              <span>Demander un devis</span>
+              <span>Demander un devis gratuit</span>
               <ArrowRight size={20} />
             </Link>
             <Link 
