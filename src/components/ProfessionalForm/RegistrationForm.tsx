@@ -122,9 +122,8 @@ const RegistrationForm = () => {
       if (!formData.contactName.trim()) errors.contactName = "Personne à contacter requise";
     }
     
-    // Validate step 2 - Products info
+    // Validate step 2 - Activity info
     else if (stepNumber === 2) {
-      if (!formData.origin) errors.origin = "Origine de fabrication requise";
       if (!formData.entityType) errors.entityType = "Type d'entité requis";
     }
     
@@ -329,43 +328,9 @@ const RegistrationForm = () => {
 
   const renderFormStep2 = () => (
     <div className="animate-fade-in space-y-6">
-      <h3 className="text-2xl font-semibold mb-8 text-agence-gray-800">Informations sur vos produits</h3>
+      <h3 className="text-2xl font-semibold mb-8 text-agence-gray-800">Informations sur votre activité</h3>
       
       <div className="grid grid-cols-1 gap-6">
-        <div>
-          <label htmlFor="origin" className="form-label">Origine de fabrication <span className="text-red-500">*</span></label>
-          <select
-            id="origin"
-            name="origin"
-            value={formData.origin}
-            onChange={handleInputChange}
-            required
-            className={`input-field w-full ${formErrors.origin ? 'border-red-500' : ''}`}
-          >
-            <option value="">Sélectionnez</option>
-            <option value="france">Française</option>
-            <option value="germany">Allemande</option>
-            <option value="sweden">Suédoise</option>
-            <option value="italy">Italienne</option>
-            <option value="other">Autre</option>
-          </select>
-          {formErrors.origin && <p className="text-red-500 text-sm mt-1">{formErrors.origin}</p>}
-        </div>
-        
-        <div>
-          <label htmlFor="averagePrice" className="form-label">Budget moyen des paniers <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            id="averagePrice"
-            name="averagePrice"
-            value={formData.averagePrice}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Indiquez le budget moyen de vos paniers"
-          />
-        </div>
-        
         <div>
           <label htmlFor="entityType" className="form-label">Type d'entité <span className="text-red-500">*</span></label>
           <select
