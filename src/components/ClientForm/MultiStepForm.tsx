@@ -1,42 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import StepIndicator from '@/components/ui/StepIndicator';
-import { ArrowLeft, ArrowRight, Upload, Info, Check, MapPin } from 'lucide-react';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { ArrowLeft, ArrowRight, Upload, Info, Check, MapPin, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
-const mockProfessionals = [
-  { id: 1, name: 'Cuisines Modernes', specialty: 'Cuisine', rating: 4.8, postalCode: '75001', city: 'Paris', lat: 48.8566, lng: 2.3522, distance: 0 },
-  { id: 2, name: 'Déco Intérieure', specialty: 'Aménagement', rating: 4.6, postalCode: '75002', city: 'Paris', lat: 48.8650, lng: 2.3428, distance: 0 },
-  { id: 3, name: 'Salles de Bain Élégantes', specialty: 'Salle de bain', rating: 4.9, postalCode: '75003', city: 'Paris', lat: 48.8615, lng: 2.3588, distance: 0 },
-  { id: 4, name: 'Concept Rangement', specialty: 'Dressing', rating: 4.7, postalCode: '75004', city: 'Paris', lat: 48.8543, lng: 2.3527, distance: 0 },
-  { id: 5, name: 'Cuisines & Co', specialty: 'Cuisine', rating: 4.5, postalCode: '75005', city: 'Paris', lat: 48.8448, lng: 2.3495, distance: 0 },
-  { id: 6, name: 'Habitat Design', specialty: 'Aménagement', rating: 4.8, postalCode: '75006', city: 'Paris', lat: 48.8495, lng: 2.3364, distance: 0 },
-  { id: 7, name: 'L\'Atelier Cuisine', specialty: 'Cuisine', rating: 4.9, postalCode: '75007', city: 'Paris', lat: 48.8560, lng: 2.3265, distance: 0 },
-  { id: 8, name: 'Bain & Déco', specialty: 'Salle de bain', rating: 4.6, postalCode: '75008', city: 'Paris', lat: 48.8729, lng: 2.3138, distance: 0 },
-  { id: 9, name: 'Lyon Cuisines', specialty: 'Cuisine', rating: 4.7, postalCode: '69001', city: 'Lyon', lat: 45.7640, lng: 4.8357, distance: 0 },
-  { id: 10, name: 'Espace Rangement', specialty: 'Dressing', rating: 4.8, postalCode: '69002', city: 'Lyon', lat: 45.7543, lng: 4.8316, distance: 0 },
-  { id: 11, name: 'Meubles Sur Mesure', specialty: 'Aménagement', rating: 4.9, postalCode: '69003', city: 'Lyon', lat: 45.7563, lng: 4.8415, distance: 0 },
-  { id: 12, name: 'Cuisines Élégance', specialty: 'Cuisine', rating: 4.5, postalCode: '69004', city: 'Lyon', lat: 45.7734, lng: 4.8282, distance: 0 },
-  { id: 13, name: 'Marseille Déco', specialty: 'Aménagement', rating: 4.8, postalCode: '13001', city: 'Marseille', lat: 43.2965, lng: 5.3698, distance: 0 },
-  { id: 14, name: 'Ambiance Bain', specialty: 'Salle de bain', rating: 4.6, postalCode: '13002', city: 'Marseille', lat: 43.3038, lng: 5.3651, distance: 0 },
-  { id: 15, name: 'Concept Cuisine', specialty: 'Cuisine', rating: 4.7, postalCode: '13003', city: 'Marseille', lat: 43.3101, lng: 5.3724, distance: 0 },
-];
+interface Professional {
+  id: string;
+  company_name: string;
+  entity_type: string;
+  city: string;
+  postal_code: string;
+  latitude: number | null;
+  longitude: number | null;
+  selected_plan: string;
+  distance?: number;
+}
 
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -47,19 +27,6 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
   const distance = R * c;
   return distance;
-};
-
-const postalCodeCoordinates = {
-  '75': { lat: 48.8566, lng: 2.3522 },
-  '69': { lat: 45.7640, lng: 4.8357 },
-  '13': { lat: 43.2965, lng: 5.3698 },
-  '33': { lat: 44.8378, lng: -0.5795 },
-  '59': { lat: 50.6292, lng: 3.0573 },
-  '67': { lat: 48.5734, lng: 7.7521 },
-  '31': { lat: 43.6045, lng: 1.4442 },
-  '44': { lat: 47.2184, lng: -1.5536 },
-  '06': { lat: 43.7102, lng: 7.2620 },
-  '63': { lat: 45.7772, lng: 3.0870 },
 };
 
 const MultiStepForm = () => {
@@ -73,6 +40,8 @@ const MultiStepForm = () => {
     address: '',
     postalCode: '',
     city: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
     projectType: '',
     buildingType: '',
     floor: '',
@@ -92,60 +61,104 @@ const MultiStepForm = () => {
     layoutNeeds: '',
     floorPlan: null,
     photos: [],
-    selectedProfessionals: []
+    selectedProfessionals: [] as string[]
   });
 
-  const [localProfessionals, setLocalProfessionals] = useState([]);
+  const [localProfessionals, setLocalProfessionals] = useState<Professional[]>([]);
+  const [allProfessionals, setAllProfessionals] = useState<Professional[]>([]);
   const [selectedCount, setSelectedCount] = useState(0);
   const [proximity, setProximity] = useState('both');
+  const [isLoadingPros, setIsLoadingPros] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeolocating, setIsGeolocating] = useState(false);
 
+  // Fetch professionals from database
   useEffect(() => {
-    if (formData.postalCode) {
-      try {
-        const departmentCode = formData.postalCode.substring(0, 2);
-        let userCoords = postalCodeCoordinates[departmentCode];
-        
-        if (!userCoords) {
-          userCoords = { lat: 48.8566, lng: 2.3522 };
-        }
-        
-        const professionalsWithDistance = mockProfessionals.map(pro => {
-          const distance = calculateDistance(
-            userCoords.lat, 
-            userCoords.lng, 
-            pro.lat, 
-            pro.lng
+    const fetchProfessionals = async () => {
+      setIsLoadingPros(true);
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('id, company_name, entity_type, city, postal_code, latitude, longitude, selected_plan')
+        .eq('status', 'approved');
+      
+      if (error) {
+        console.error('Error fetching professionals:', error);
+      } else if (data) {
+        setAllProfessionals(data);
+      }
+      setIsLoadingPros(false);
+    };
+
+    fetchProfessionals();
+  }, []);
+
+  // Geocode client address
+  useEffect(() => {
+    const geocodeAddress = async () => {
+      if (formData.postalCode.length === 5 && formData.city) {
+        setIsGeolocating(true);
+        try {
+          const response = await fetch(
+            `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(formData.postalCode + ' ' + formData.city)}&limit=1`
           );
-          
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            const [lng, lat] = data.features[0].geometry.coordinates;
+            setFormData(prev => ({
+              ...prev,
+              latitude: lat,
+              longitude: lng
+            }));
+          }
+        } catch (error) {
+          console.error('Geocoding error:', error);
+        } finally {
+          setIsGeolocating(false);
+        }
+      }
+    };
+
+    const debounce = setTimeout(geocodeAddress, 500);
+    return () => clearTimeout(debounce);
+  }, [formData.postalCode, formData.city]);
+
+  // Filter professionals based on location
+  useEffect(() => {
+    if (formData.latitude && formData.longitude && allProfessionals.length > 0) {
+      const professionalsWithDistance = allProfessionals
+        .filter(pro => pro.latitude && pro.longitude)
+        .map(pro => {
+          const distance = calculateDistance(
+            formData.latitude!,
+            formData.longitude!,
+            pro.latitude!,
+            pro.longitude!
+          );
           return { ...pro, distance: parseFloat(distance.toFixed(1)) };
         });
-        
-        let filtered = [];
-        
-        if (proximity === 'postcode' || proximity === 'both') {
-          const samePostcodeItems = professionalsWithDistance.filter(pro => 
-            pro.postalCode.startsWith(departmentCode)
-          );
-          filtered = [...filtered, ...samePostcodeItems];
-        }
-        
-        if (proximity === 'radius' || proximity === 'both') {
-          const radiusItems = professionalsWithDistance.filter(pro => 
-            pro.distance <= 20 && 
-            !filtered.some(item => item.id === pro.id)
-          );
-          filtered = [...filtered, ...radiusItems];
-        }
-        
-        filtered.sort((a, b) => a.distance - b.distance);
-        
-        setLocalProfessionals(filtered.length > 0 ? filtered : mockProfessionals);
-      } catch (error) {
-        console.error("Error filtering professionals:", error);
-        setLocalProfessionals(mockProfessionals);
+
+      let filtered: Professional[] = [];
+      const departmentCode = formData.postalCode.substring(0, 2);
+
+      if (proximity === 'postcode' || proximity === 'both') {
+        const samePostcodeItems = professionalsWithDistance.filter(pro =>
+          pro.postal_code.startsWith(departmentCode)
+        );
+        filtered = [...filtered, ...samePostcodeItems];
       }
+
+      if (proximity === 'radius' || proximity === 'both') {
+        const radiusItems = professionalsWithDistance.filter(pro =>
+          (pro.distance || 0) <= 50 &&
+          !filtered.some(item => item.id === pro.id)
+        );
+        filtered = [...filtered, ...radiusItems];
+      }
+
+      filtered.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      setLocalProfessionals(filtered.length > 0 ? filtered : professionalsWithDistance.slice(0, 10));
     }
-  }, [formData.postalCode, proximity, currentStep]);
+  }, [formData.latitude, formData.longitude, formData.postalCode, allProfessionals, proximity]);
 
   useEffect(() => {
     setSelectedCount(formData.selectedProfessionals.length);
@@ -218,10 +231,10 @@ const MultiStepForm = () => {
     }
   };
 
-  const toggleProfessionalSelection = (professionalId) => {
+  const toggleProfessionalSelection = (professionalId: string) => {
     setFormData(prevData => {
       const isSelected = prevData.selectedProfessionals.includes(professionalId);
-      let newSelection;
+      let newSelection: string[];
 
       if (isSelected) {
         newSelection = prevData.selectedProfessionals.filter(id => id !== professionalId);
@@ -245,7 +258,7 @@ const MultiStepForm = () => {
     });
   };
 
-  const handleProximityChange = (value) => {
+  const handleProximityChange = (value: string) => {
     setProximity(value);
   };
 
@@ -272,25 +285,88 @@ const MultiStepForm = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setIsSubmitting(true);
     
-    // Add email destination
-    const recipientEmail = '123.agencemoi@gmail.com';
-    console.log(`Form data will be sent to: ${recipientEmail}`);
-    
-    // In a real implementation, you would send an email here
-    // For now, we'll simulate it with a toast notification
-    
-    toast({
-      title: "Demande envoyée !",
-      description: `Votre demande de devis a été envoyée à ${recipientEmail}. Vous recevrez une réponse sous 24h.`,
-    });
-    
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 3000);
+    try {
+      // Create the client lead
+      const { data: leadData, error: leadError } = await supabase
+        .from('client_leads')
+        .insert({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          postal_code: formData.postalCode,
+          city: formData.city,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          project_type: formData.projectType,
+          budget_range: formData.budget,
+          timeline: formData.startDate,
+          description: formData.layoutNeeds || null,
+        })
+        .select()
+        .single();
+
+      if (leadError) {
+        console.error('Error creating lead:', leadError);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'envoi de votre demande.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Assign the lead to selected professionals OR auto-assign to closest ones
+      let professionalsToAssign = formData.selectedProfessionals;
+      
+      // If no professionals selected, auto-assign to the 3 closest
+      if (professionalsToAssign.length === 0 && localProfessionals.length > 0) {
+        professionalsToAssign = localProfessionals.slice(0, 3).map(p => p.id);
+      }
+
+      // Create lead assignments
+      if (professionalsToAssign.length > 0 && leadData) {
+        const assignments = professionalsToAssign.map(proId => {
+          const pro = localProfessionals.find(p => p.id === proId);
+          return {
+            lead_id: leadData.id,
+            professional_id: proId,
+            distance_km: pro?.distance || null,
+          };
+        });
+
+        const { error: assignmentError } = await supabase
+          .from('lead_assignments')
+          .insert(assignments);
+
+        if (assignmentError) {
+          console.error('Error creating assignments:', assignmentError);
+        }
+      }
+
+      toast({
+        title: "Demande envoyée !",
+        description: `Votre demande de devis a été transmise à ${professionalsToAssign.length} professionnel(s). Vous serez contacté sous 24h.`,
+      });
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderPersonalInfoStep = () => (
@@ -793,7 +869,12 @@ const MultiStepForm = () => {
       </div>
       
       <div className="space-y-4">
-        {localProfessionals.length > 0 ? (
+        {isLoadingPros ? (
+          <div className="text-center p-8 border border-dashed border-agence-gray-300 rounded-lg">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-agence-orange-500 mb-2" />
+            <p className="text-agence-gray-600">Chargement des professionnels...</p>
+          </div>
+        ) : localProfessionals.length > 0 ? (
           localProfessionals.map(professional => {
             const isSelected = formData.selectedProfessionals.includes(professional.id);
             
@@ -808,23 +889,22 @@ const MultiStepForm = () => {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h5 className="font-semibold text-agence-gray-800">{professional.name}</h5>
+                    <h5 className="font-semibold text-agence-gray-800">{professional.company_name}</h5>
                     <div className="text-sm text-agence-gray-600 mt-1">
-                      <span className="inline-block mr-4">{professional.specialty}</span>
+                      <span className="inline-block mr-4 capitalize">{professional.entity_type}</span>
                       <span className="inline-block mr-4">
                         <span className="inline-flex items-center">
                           <MapPin size={14} className="mr-1 text-agence-gray-500" />
-                          {professional.city} ({professional.postalCode})
+                          {professional.city} ({professional.postal_code})
                         </span>
                       </span>
-                      <span className="inline-flex items-center">
-                        <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        {professional.rating}
-                      </span>
+                      {professional.selected_plan === 'premium' && (
+                        <span className="inline-flex items-center bg-agence-orange-100 text-agence-orange-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          Premium
+                        </span>
+                      )}
                     </div>
-                    {professional.distance > 0 && (
+                    {(professional.distance ?? 0) > 0 && (
                       <div className="mt-1 inline-block px-2 py-1 bg-agence-gray-100 text-agence-gray-700 text-xs rounded-md">
                         {professional.distance} km
                       </div>
@@ -848,8 +928,13 @@ const MultiStepForm = () => {
           })
         ) : (
           <div className="text-center p-8 border border-dashed border-agence-gray-300 rounded-lg">
-            <p className="text-agence-gray-600">
-              Aucun professionnel trouvé dans votre secteur. Veuillez vérifier votre code postal.
+            <p className="text-agence-gray-600 mb-2">
+              {allProfessionals.length === 0 
+                ? "Aucun professionnel n'est encore inscrit sur la plateforme."
+                : "Aucun professionnel trouvé dans votre secteur."}
+            </p>
+            <p className="text-sm text-agence-gray-500">
+              Votre demande sera automatiquement transmise aux professionnels les plus proches une fois qu'ils seront inscrits.
             </p>
           </div>
         )}
@@ -966,7 +1051,7 @@ const MultiStepForm = () => {
                     const pro = localProfessionals.find(p => p.id === proId);
                     return pro ? (
                       <li key={pro.id} className="text-agence-gray-700">
-                        {pro.name} - {pro.specialty}, {pro.city}
+                        {pro.company_name} - {pro.entity_type}, {pro.city}
                       </li>
                     ) : null;
                   })}
@@ -1073,8 +1158,16 @@ const MultiStepForm = () => {
             <button
               type="submit"
               className="flex items-center space-x-2 btn-primary"
+              disabled={isSubmitting}
             >
-              <span>Soumettre ma demande</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Envoi en cours...</span>
+                </>
+              ) : (
+                <span>Soumettre ma demande</span>
+              )}
             </button>
           )}
         </div>
