@@ -6,7 +6,6 @@ import HowItWorks from '@/components/Home/HowItWorks';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import Testimonials from '@/components/Home/Testimonials';
-import ProfessionalSection from '@/components/Home/ProfessionalSection';
 
 const Index = () => {
   useEffect(() => {
@@ -20,7 +19,6 @@ const Index = () => {
         <Hero />
         <Features />
         <HowItWorks />
-        <ProfessionalSection />
         <Testimonials />
       </main>
       <Footer />
