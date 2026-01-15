@@ -41,6 +41,8 @@ interface FormErrors {
   postalCode?: string | null;
   city?: string | null;
   contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
   origin?: string | null;
   entityType?: string | null;
   bankName?: string | null;
@@ -60,8 +62,8 @@ const RegistrationForm = () => {
     postalCode: '',
     city: '',
     contactName: '',
-    contactPhone: '0661461681', // Default phone number
-    contactEmail: '123.agencemoi@gmail.com', // Default email
+    contactPhone: '',
+    contactEmail: '',
     website: '',
     origin: '',
     averagePrice: '',
@@ -120,6 +122,8 @@ const RegistrationForm = () => {
       if (!formData.postalCode.trim()) errors.postalCode = "Code postal requis";
       if (!formData.city.trim()) errors.city = "Ville requise";
       if (!formData.contactName.trim()) errors.contactName = "Personne à contacter requise";
+      if (!formData.contactPhone.trim()) errors.contactPhone = "Téléphone requis";
+      if (!formData.contactEmail.trim()) errors.contactEmail = "Email requis";
     }
     
     // Validate step 2 - Activity info
@@ -291,10 +295,12 @@ const RegistrationForm = () => {
             id="contactPhone"
             name="contactPhone"
             value={formData.contactPhone}
-            readOnly
-            className="input-field w-full bg-gray-100"
+            onChange={handleInputChange}
+            required
+            className={`input-field w-full ${formErrors.contactPhone ? 'border-red-500' : ''}`}
             placeholder="Numéro de téléphone"
           />
+          {formErrors.contactPhone && <p className="text-red-500 text-sm mt-1">{formErrors.contactPhone}</p>}
         </div>
         
         <div>
@@ -304,10 +310,12 @@ const RegistrationForm = () => {
             id="contactEmail"
             name="contactEmail"
             value={formData.contactEmail}
-            readOnly
-            className="input-field w-full bg-gray-100"
+            onChange={handleInputChange}
+            required
+            className={`input-field w-full ${formErrors.contactEmail ? 'border-red-500' : ''}`}
             placeholder="Adresse email"
           />
+          {formErrors.contactEmail && <p className="text-red-500 text-sm mt-1">{formErrors.contactEmail}</p>}
         </div>
         
         <div className="md:col-span-2">
