@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -9,6 +9,7 @@ import AdminLogin from '@/components/Admin/AdminLogin';
 import StatsCards from '@/components/Admin/StatsCards';
 import ProfessionalsTable from '@/components/Admin/ProfessionalsTable';
 import LeadsTable from '@/components/Admin/LeadsTable';
+import AdminFilters from '@/components/Admin/AdminFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { LogOut, Loader2, RefreshCw } from 'lucide-react';
@@ -52,6 +53,11 @@ interface Lead {
 }
 
 const AdminDashboard = () => {
+  // Filters state
+  const [proSearch, setProSearch] = useState('');
+  const [proStatusFilter, setProStatusFilter] = useState('all');
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadStatusFilter, setLeadStatusFilter] = useState('all');
   const { user, isAdmin, loading: authLoading, signIn, signOut } = useAdminAuth();
   const { toast } = useToast();
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import StepIndicator from '@/components/ui/StepIndicator';
-import { ArrowLeft, ArrowRight, Upload, Info, Check, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, Info, Check, MapPin, Loader2, Link as LinkIcon, Instagram } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Professional {
@@ -50,6 +50,20 @@ const MultiStepForm = () => {
     surface: '',
     startDate: '',
     budget: '',
+    // Configuration cuisine
+    kitchenLayout: '' as string,
+    kitchenType: '' as string,
+    // Matériaux & Finitions
+    facadeFinish: [] as string[],
+    countertopMaterial: [] as string[],
+    // Électroménager
+    appliances: [] as string[],
+    plateType: '',
+    applianceBrands: '',
+    // Inspirations
+    inspirationLinks: '',
+    storeReferences: '',
+    // Anciennes données
     furniture: {
       colors: '',
       handles: false
@@ -57,10 +71,10 @@ const MultiStepForm = () => {
     countertop: '',
     sink: '',
     faucet: '',
-    appliances: '',
     layoutNeeds: '',
     floorPlan: null,
     photos: [],
+    inspirationPhotos: [],
     selectedProfessionals: [] as string[]
   });
 
@@ -167,7 +181,9 @@ const MultiStepForm = () => {
   const steps = [
     { title: 'Infos personnelles' },
     { title: 'Projet' },
-    { title: 'Spécifications' },
+    { title: 'Configuration' },
+    { title: 'Matériaux' },
+    { title: 'Électroménager' },
     { title: 'Documents' },
     { title: 'Professionnels' },
     { title: 'Confirmation' }
@@ -181,7 +197,7 @@ const MultiStepForm = () => {
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData],
+          ...(formData[parent as keyof typeof formData] as object),
           [child]: value
         }
       });
@@ -201,7 +217,7 @@ const MultiStepForm = () => {
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData],
+          ...(formData[parent as keyof typeof formData] as object),
           [child]: checked
         }
       });
@@ -211,6 +227,16 @@ const MultiStepForm = () => {
         [name]: checked
       });
     }
+  };
+
+  const handleMultiCheckbox = (field: 'facadeFinish' | 'countertopMaterial' | 'appliances', value: string) => {
+    setFormData(prev => {
+      const currentValues = prev[field];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+      return { ...prev, [field]: newValues };
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -227,6 +253,12 @@ const MultiStepForm = () => {
       setFormData({
         ...formData,
         photos: selectedPhotos
+      });
+    } else if (fieldName === 'inspirationPhotos') {
+      const selectedPhotos = Array.from(files).slice(0, 5);
+      setFormData({
+        ...formData,
+        inspirationPhotos: selectedPhotos
       });
     }
   };
@@ -263,7 +295,7 @@ const MultiStepForm = () => {
   };
 
   const nextStep = () => {
-    if (currentStep === 4 && formData.selectedProfessionals.length < 3) {
+    if (currentStep === 6 && formData.selectedProfessionals.length < 3) {
       toast({
         title: "Sélection requise",
         description: "Veuillez sélectionner au moins 3 professionnels pour continuer.",
@@ -290,7 +322,19 @@ const MultiStepForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Create the client lead
+      // Build description with all kitchen details
+      const description = [
+        formData.layoutNeeds,
+        formData.kitchenLayout && `Configuration: ${formData.kitchenLayout}`,
+        formData.kitchenType && `Type: ${formData.kitchenType}`,
+        formData.facadeFinish.length > 0 && `Façades: ${formData.facadeFinish.join(', ')}`,
+        formData.countertopMaterial.length > 0 && `Plan de travail: ${formData.countertopMaterial.join(', ')}`,
+        formData.appliances.length > 0 && `Électroménager: ${formData.appliances.join(', ')}`,
+        formData.applianceBrands && `Marques souhaitées: ${formData.applianceBrands}`,
+        formData.inspirationLinks && `Inspirations: ${formData.inspirationLinks}`,
+        formData.storeReferences && `Références: ${formData.storeReferences}`,
+      ].filter(Boolean).join('\n');
+
       const { data: leadData, error: leadError } = await supabase
         .from('client_leads')
         .insert({
@@ -306,7 +350,7 @@ const MultiStepForm = () => {
           project_type: formData.projectType,
           budget_range: formData.budget,
           timeline: formData.startDate,
-          description: formData.layoutNeeds || null,
+          description: description || null,
         })
         .select()
         .single();
@@ -321,15 +365,12 @@ const MultiStepForm = () => {
         return;
       }
 
-      // Assign the lead to selected professionals OR auto-assign to closest ones
       let professionalsToAssign = formData.selectedProfessionals;
       
-      // If no professionals selected, auto-assign to the 3 closest
       if (professionalsToAssign.length === 0 && localProfessionals.length > 0) {
         professionalsToAssign = localProfessionals.slice(0, 3).map(p => p.id);
       }
 
-      // Create lead assignments
       if (professionalsToAssign.length > 0 && leadData) {
         const assignments = professionalsToAssign.map(proId => {
           const pro = localProfessionals.find(p => p.id === proId);
@@ -568,21 +609,6 @@ const MultiStepForm = () => {
         </div>
         
         <div>
-          <label htmlFor="surface" className="form-label">Surface en m² <span className="text-red-500">*</span></label>
-          <input
-            type="number"
-            id="surface"
-            name="surface"
-            value={formData.surface}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Surface approximative"
-            min="1"
-          />
-        </div>
-        
-        <div>
           <label htmlFor="startDate" className="form-label">Démarrage du projet <span className="text-red-500">*</span></label>
           <select
             id="startDate"
@@ -621,92 +647,73 @@ const MultiStepForm = () => {
     </div>
   );
 
-  const renderSpecificationsStep = () => (
+  const renderConfigurationStep = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Spécifications techniques</h3>
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Configuration de la cuisine</h3>
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="space-y-8">
+        {/* Layout */}
         <div>
-          <label htmlFor="furniture.colors" className="form-label">Coloris de mobilier souhaité</label>
-          <input
-            type="text"
-            id="furniture.colors"
-            name="furniture.colors"
-            value={formData.furniture.colors}
-            onChange={handleInputChange}
-            className="input-field w-full"
-            placeholder="Ex: Blanc mat, Bois naturel, etc."
-          />
+          <label className="form-label mb-3 block">Configuration <span className="text-red-500">*</span></label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {['Linéaire', 'En L', 'En U', 'Avec îlot', 'En parallèle', 'En G'].map((layout) => (
+              <button
+                key={layout}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, kitchenLayout: layout }))}
+                className={`p-4 border rounded-lg text-center transition-all ${
+                  formData.kitchenLayout === layout
+                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
+                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                }`}
+              >
+                {layout}
+              </button>
+            ))}
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            id="furniture.handles"
-            name="furniture.handles"
-            checked={formData.furniture.handles}
-            onChange={handleCheckboxChange}
-            className="w-5 h-5 text-agence-orange-500"
-          />
-          <label htmlFor="furniture.handles" className="form-label">Meubles avec poignées</label>
-        </div>
-        
+
+        {/* Kitchen Type */}
         <div>
-          <label htmlFor="countertop" className="form-label">Type de plan de travail</label>
-          <select
-            id="countertop"
-            name="countertop"
-            value={formData.countertop}
-            onChange={handleInputChange}
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="laminate">Stratifié</option>
-            <option value="compact">Compact</option>
-            <option value="stone">Pierre</option>
-            <option value="other">Autre</option>
-          </select>
+          <label className="form-label mb-3 block">Type de cuisine</label>
+          <div className="grid grid-cols-2 gap-3">
+            {['Cuisine ouverte', 'Cuisine fermée', 'Semi-ouverte'].map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, kitchenType: type }))}
+                className={`p-4 border rounded-lg text-center transition-all ${
+                  formData.kitchenType === type
+                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
+                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
-        
+
+        {/* Surface */}
         <div>
-          <label htmlFor="sink" className="form-label">Évier souhaité</label>
-          <input
-            type="text"
-            id="sink"
-            name="sink"
-            value={formData.sink}
-            onChange={handleInputChange}
-            className="input-field w-full"
-            placeholder="Type et matière de l'évier"
-          />
+          <label htmlFor="surface" className="form-label">Surface estimée <span className="text-red-500">*</span></label>
+          <div className="relative">
+            <input
+              type="number"
+              id="surface"
+              name="surface"
+              value={formData.surface}
+              onChange={handleInputChange}
+              required
+              className="input-field w-full pr-12"
+              placeholder="Surface de la cuisine"
+              min="1"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-agence-gray-500">m²</span>
+          </div>
         </div>
-        
-        <div>
-          <label htmlFor="faucet" className="form-label">Mitigeur souhaité</label>
-          <input
-            type="text"
-            id="faucet"
-            name="faucet"
-            value={formData.faucet}
-            onChange={handleInputChange}
-            className="input-field w-full"
-            placeholder="Type et matière du mitigeur"
-          />
-        </div>
-        
-        <div>
-          <label htmlFor="appliances" className="form-label">Électroménagers souhaités et marques préférentielles</label>
-          <textarea
-            id="appliances"
-            name="appliances"
-            value={formData.appliances}
-            onChange={handleInputChange}
-            className="input-field w-full resize-none"
-            rows={4}
-            placeholder="Listez les électroménagers souhaités et vos marques préférées"
-          ></textarea>
-        </div>
-        
+
+        {/* Additional needs */}
         <div>
           <label htmlFor="layoutNeeds" className="form-label">Besoins en agencement et ambiance recherchée</label>
           <textarea
@@ -723,17 +730,193 @@ const MultiStepForm = () => {
     </div>
   );
 
-  const renderDocumentsStep = () => (
+  const renderMaterialsStep = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Documents & Photos</h3>
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Matériaux & Finitions</h3>
       
       <div className="space-y-8">
+        {/* Facade Finish */}
+        <div>
+          <label className="form-label mb-3 block">Façades (plusieurs choix possibles)</label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {['Matte', 'Brillante', 'Bois (aspect)', 'Béton', 'Verre', 'Laquée', 'Stratifiée', 'Autre'].map((finish) => (
+              <button
+                key={finish}
+                type="button"
+                onClick={() => handleMultiCheckbox('facadeFinish', finish)}
+                className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 ${
+                  formData.facadeFinish.includes(finish)
+                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
+                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                }`}
+              >
+                {formData.facadeFinish.includes(finish) && <Check size={16} />}
+                {finish}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Countertop Material */}
+        <div>
+          <label className="form-label mb-3 block">Plan de travail (plusieurs choix possibles)</label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {['Stratifié', 'Quartz', 'Granit', 'Céramique', 'Bois massif', 'Inox', 'Compact', 'Pierre naturelle'].map((material) => (
+              <button
+                key={material}
+                type="button"
+                onClick={() => handleMultiCheckbox('countertopMaterial', material)}
+                className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 ${
+                  formData.countertopMaterial.includes(material)
+                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
+                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                }`}
+              >
+                {formData.countertopMaterial.includes(material) && <Check size={16} />}
+                {material}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Colors */}
+        <div>
+          <label htmlFor="furniture.colors" className="form-label">Coloris de mobilier souhaité</label>
+          <input
+            type="text"
+            id="furniture.colors"
+            name="furniture.colors"
+            value={formData.furniture.colors}
+            onChange={handleInputChange}
+            className="input-field w-full"
+            placeholder="Ex: Blanc mat, Bois naturel, Gris anthracite..."
+          />
+        </div>
+
+        {/* Handles */}
+        <div className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            id="furniture.handles"
+            name="furniture.handles"
+            checked={formData.furniture.handles}
+            onChange={handleCheckboxChange}
+            className="w-5 h-5 text-agence-orange-500 rounded"
+          />
+          <label htmlFor="furniture.handles" className="form-label cursor-pointer">Meubles avec poignées (sinon système push-to-open)</label>
+        </div>
+
+        {/* Sink & Faucet */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="sink" className="form-label">Évier souhaité</label>
+            <input
+              type="text"
+              id="sink"
+              name="sink"
+              value={formData.sink}
+              onChange={handleInputChange}
+              className="input-field w-full"
+              placeholder="Type et matière de l'évier"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="faucet" className="form-label">Mitigeur souhaité</label>
+            <input
+              type="text"
+              id="faucet"
+              name="faucet"
+              value={formData.faucet}
+              onChange={handleInputChange}
+              className="input-field w-full"
+              placeholder="Type et matière du mitigeur"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAppliancesStep = () => (
+    <div className="animate-fade-in">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Électroménager</h3>
+      
+      <div className="space-y-8">
+        {/* Appliances Selection */}
+        <div>
+          <label className="form-label mb-3 block">Équipements souhaités (plusieurs choix possibles)</label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {['Four', 'Plaque de cuisson', 'Hotte', 'Lave-vaisselle', 'Réfrigérateur', 'Micro-ondes', 'Four vapeur', 'Cave à vin', 'Machine à café encastrable'].map((appliance) => (
+              <button
+                key={appliance}
+                type="button"
+                onClick={() => handleMultiCheckbox('appliances', appliance)}
+                className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 ${
+                  formData.appliances.includes(appliance)
+                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
+                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                }`}
+              >
+                {formData.appliances.includes(appliance) && <Check size={16} />}
+                {appliance}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Plate Type */}
+        {formData.appliances.includes('Plaque de cuisson') && (
+          <div>
+            <label className="form-label mb-3 block">Type de plaque</label>
+            <div className="grid grid-cols-3 gap-3">
+              {['Induction', 'Gaz', 'Vitrocéramique', 'Mixte'].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, plateType: type }))}
+                  className={`p-3 border rounded-lg text-center transition-all ${
+                    formData.plateType === type
+                      ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
+                      : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Brands */}
+        <div>
+          <label htmlFor="applianceBrands" className="form-label">Marques souhaitées (si connues)</label>
+          <input
+            type="text"
+            id="applianceBrands"
+            name="applianceBrands"
+            value={formData.applianceBrands}
+            onChange={handleInputChange}
+            className="input-field w-full"
+            placeholder="Ex: Bosch, Siemens, Miele, Samsung..."
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDocumentsStep = () => (
+    <div className="animate-fade-in">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Documents & Inspirations</h3>
+      
+      <div className="space-y-8">
+        {/* Floor Plan */}
         <div className="border border-agence-gray-200 rounded-lg p-6 space-y-4 bg-white">
           <div className="flex items-start space-x-3">
             <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full">
               <Upload size={24} />
             </div>
-            <div>
+            <div className="flex-1">
               <h4 className="text-lg font-semibold text-agence-gray-800">Plan avec dimensions <span className="text-red-500">*</span></h4>
               <p className="text-agence-gray-600 text-sm mb-4">Téléchargez un plan avec les dimensions de votre pièce (PDF, JPG ou PNG)</p>
               
@@ -759,12 +942,13 @@ const MultiStepForm = () => {
           </div>
         </div>
         
+        {/* Photos */}
         <div className="border border-agence-gray-200 rounded-lg p-6 space-y-4 bg-white">
           <div className="flex items-start space-x-3">
             <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full">
               <Upload size={24} />
             </div>
-            <div>
+            <div className="flex-1">
               <h4 className="text-lg font-semibold text-agence-gray-800">Photos de la pièce <span className="text-agence-gray-500 font-normal">(optionnel)</span></h4>
               <p className="text-agence-gray-600 text-sm mb-4">Vous pouvez ajouter jusqu'à 3 photos de la pièce actuelle (JPG ou PNG)</p>
               
@@ -792,6 +976,73 @@ const MultiStepForm = () => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Inspiration Photos */}
+        <div className="border border-agence-gray-200 rounded-lg p-6 space-y-4 bg-white">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full">
+              <Instagram size={24} />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-lg font-semibold text-agence-gray-800">Photos d'inspiration <span className="text-agence-gray-500 font-normal">(optionnel)</span></h4>
+              <p className="text-agence-gray-600 text-sm mb-4">Téléchargez jusqu'à 5 photos de cuisines qui vous inspirent</p>
+              
+              <label className="btn-secondary inline-flex cursor-pointer">
+                <input
+                  type="file"
+                  name="inspirationPhotos"
+                  onChange={(e) => handleFileChange(e, 'inspirationPhotos')}
+                  accept=".jpg,.jpeg,.png"
+                  className="hidden"
+                  multiple
+                />
+                <span>Sélectionner des inspirations</span>
+              </label>
+              
+              {formData.inspirationPhotos && formData.inspirationPhotos.length > 0 && (
+                <div className="mt-3 text-sm text-agence-gray-700">
+                  <p className="mb-2">{formData.inspirationPhotos.length} photo(s) d'inspiration :</p>
+                  <ul className="space-y-1 list-disc pl-5">
+                    {Array.from(formData.inspirationPhotos).map((photo, index) => (
+                      <li key={index}>{(photo as File).name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Inspiration Links */}
+        <div>
+          <label htmlFor="inspirationLinks" className="form-label flex items-center gap-2">
+            <LinkIcon size={16} />
+            Liens Pinterest / Instagram
+          </label>
+          <textarea
+            id="inspirationLinks"
+            name="inspirationLinks"
+            value={formData.inspirationLinks}
+            onChange={handleInputChange}
+            className="input-field w-full resize-none"
+            rows={3}
+            placeholder="Collez vos liens vers des tableaux Pinterest ou posts Instagram qui vous inspirent..."
+          ></textarea>
+        </div>
+
+        {/* Store References */}
+        <div>
+          <label htmlFor="storeReferences" className="form-label">Références vues en magasin</label>
+          <textarea
+            id="storeReferences"
+            name="storeReferences"
+            value={formData.storeReferences}
+            onChange={handleInputChange}
+            className="input-field w-full resize-none"
+            rows={3}
+            placeholder="Ex: Modèle METOD chez IKEA, Cuisine KONTIKA chez But..."
+          ></textarea>
         </div>
         
         <div className="flex items-start space-x-3 p-4 bg-agence-orange-50 border border-agence-orange-200 rounded-lg">
@@ -832,7 +1083,7 @@ const MultiStepForm = () => {
                 : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
             }`}
           >
-            Même code postal
+            Même département
           </button>
           <button
             type="button"
@@ -843,7 +1094,7 @@ const MultiStepForm = () => {
                 : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
             }`}
           >
-            Rayon de 20km
+            Rayon de 50km
           </button>
           <button
             type="button"
@@ -934,7 +1185,7 @@ const MultiStepForm = () => {
                 : "Aucun professionnel trouvé dans votre secteur."}
             </p>
             <p className="text-sm text-agence-gray-500">
-              Votre demande sera automatiquement transmise aux professionnels les plus proches une fois qu'ils seront inscrits.
+              Votre demande sera automatiquement transmise aux professionnels les plus proches.
             </p>
           </div>
         )}
@@ -978,54 +1229,20 @@ const MultiStepForm = () => {
           
           <div>
             <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
-              Détails du projet
+              Configuration cuisine
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-agence-gray-500">Type de projet:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.projectType === 'kitchen' && 'Cuisine'}
-                  {formData.projectType === 'bathroom' && 'Salle de bain'}
-                  {formData.projectType === 'library' && 'Bibliothèque'}
-                  {formData.projectType === 'dressing' && 'Dressing'}
-                  {formData.projectType === 'other' && 'Autre aménagement'}
-                </p>
+                <span className="text-agence-gray-500">Configuration:</span>
+                <p className="font-medium text-agence-gray-800">{formData.kitchenLayout || '-'}</p>
               </div>
               <div>
-                <span className="text-agence-gray-500">Type de bâtiment:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.buildingType === 'house' && 'Maison'}
-                  {formData.buildingType === 'apartment' && `Appartement ${formData.floor ? `(Étage ${formData.floor})` : ''}`}
-                  {formData.buildingType === 'professional' && 'Local professionnel'}
-                </p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Type de travaux:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.workType === 'install' && 'Installation nouvelle'}
-                  {formData.workType === 'replace' && 'Remplacement'}
-                  {formData.workType === 'renovation' && 'Rénovation'}
-                </p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Type de prestation:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.serviceType === 'full' && 'Cuisine + électroménager + pose'}
-                  {formData.serviceType === 'noAppliances' && 'Cuisine + pose (sans électroménager)'}
-                  {formData.serviceType === 'kitchenOnly' && 'Cuisine seule (sans pose)'}
-                </p>
+                <span className="text-agence-gray-500">Type:</span>
+                <p className="font-medium text-agence-gray-800">{formData.kitchenType || '-'}</p>
               </div>
               <div>
                 <span className="text-agence-gray-500">Surface:</span>
                 <p className="font-medium text-agence-gray-800">{formData.surface} m²</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Démarrage du projet:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.startDate === 'lessThan3' && 'Moins de 3 mois'}
-                  {formData.startDate === '3to6' && 'Entre 3 et 6 mois'}
-                  {formData.startDate === 'moreThan6' && 'Plus de 6 mois'}
-                </p>
               </div>
               <div>
                 <span className="text-agence-gray-500">Budget estimé:</span>
@@ -1036,6 +1253,26 @@ const MultiStepForm = () => {
                   {formData.budget === '15kTo20k' && '15 000 € à 20 000 €'}
                   {formData.budget === 'more20k' && 'Plus de 20 000 €'}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
+              Matériaux & Équipements
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-agence-gray-500">Façades:</span>
+                <p className="font-medium text-agence-gray-800">{formData.facadeFinish.join(', ') || '-'}</p>
+              </div>
+              <div>
+                <span className="text-agence-gray-500">Plan de travail:</span>
+                <p className="font-medium text-agence-gray-800">{formData.countertopMaterial.join(', ') || '-'}</p>
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-agence-gray-500">Électroménager:</span>
+                <p className="font-medium text-agence-gray-800">{formData.appliances.join(', ') || '-'}</p>
               </div>
             </div>
           </div>
@@ -1057,32 +1294,8 @@ const MultiStepForm = () => {
                   })}
                 </ul>
               ) : (
-                <p className="text-sm text-red-500">Aucun professionnel sélectionné</p>
+                <p className="text-sm text-agence-gray-500">Attribution automatique aux professionnels les plus proches</p>
               )}
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
-              Documents joints
-            </h4>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-agence-gray-500">Plan avec dimensions:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.floorPlan ? (formData.floorPlan as File).name : 'Aucun fichier sélectionné'}
-                </p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Photos (optionnel):</span>
-                {formData.photos && formData.photos.length > 0 ? (
-                  <p className="font-medium text-agence-gray-800">
-                    {formData.photos.length} photo(s) sélectionnée(s)
-                  </p>
-                ) : (
-                  <p className="font-medium text-agence-gray-800">Aucune photo sélectionnée</p>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -1112,12 +1325,16 @@ const MultiStepForm = () => {
       case 1:
         return renderProjectDetailsStep();
       case 2:
-        return renderSpecificationsStep();
+        return renderConfigurationStep();
       case 3:
-        return renderDocumentsStep();
+        return renderMaterialsStep();
       case 4:
-        return renderProfessionalsStep();
+        return renderAppliancesStep();
       case 5:
+        return renderDocumentsStep();
+      case 6:
+        return renderProfessionalsStep();
+      case 7:
         return renderConfirmationStep();
       default:
         return null;
