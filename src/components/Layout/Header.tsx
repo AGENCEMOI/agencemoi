@@ -22,36 +22,46 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${
         isScrolled
-          ? 'bg-white/90 backdrop-blur-md shadow-md py-3'
-          : 'bg-transparent py-6'
+          ? 'bg-white/95 backdrop-blur-md shadow-lg py-3'
+          : 'bg-agence-gray-900/80 backdrop-blur-sm py-5'
       }`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link 
           to="/" 
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          className="flex items-center space-x-2 hover:opacity-80 transition-all duration-300"
         >
           <span className="font-playfair text-2xl font-bold">
-            <span className={isScrolled ? 'text-agence-gray-800' : 'text-white'}>AGENCE</span><span className="text-agence-orange-500">MOI</span>
+            <span className={`transition-colors duration-500 ${isScrolled ? 'text-agence-gray-800' : 'text-white'}`}>AGENCE</span>
+            <span className="text-agence-orange-500">MOI</span>
           </span>
         </Link>
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className={`${isScrolled ? 'text-agence-gray-700' : 'text-white'} hover:text-agence-orange-500 transition-colors`}>
+          <Link 
+            to="/" 
+            className={`transition-colors duration-500 hover:text-agence-orange-500 ${isScrolled ? 'text-agence-gray-700' : 'text-white'}`}
+          >
             Accueil
           </Link>
-          <Link to="/comment-ca-marche" className={`${isScrolled ? 'text-agence-gray-700' : 'text-white'} hover:text-agence-orange-500 transition-colors`}>
+          <Link 
+            to="/comment-ca-marche" 
+            className={`transition-colors duration-500 hover:text-agence-orange-500 ${isScrolled ? 'text-agence-gray-700' : 'text-white'}`}
+          >
             Comment ça marche
           </Link>
-          <Link to="/professional-form" className={`${isScrolled ? 'text-agence-gray-700' : 'text-white'} hover:text-agence-orange-500 transition-colors`}>
+          <Link 
+            to="/professional-form" 
+            className={`transition-colors duration-500 hover:text-agence-orange-500 ${isScrolled ? 'text-agence-gray-700' : 'text-white'}`}
+          >
             Professionnels
           </Link>
           <Link 
             to="/client-form" 
-            className="btn-primary"
+            className="btn-primary transition-transform duration-300 hover:scale-105"
           >
             Demander un devis
           </Link>
@@ -59,7 +69,7 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <button 
-          className={`md:hidden ${isScrolled ? 'text-agence-gray-800' : 'text-white'}`}
+          className={`md:hidden transition-colors duration-500 ${isScrolled ? 'text-agence-gray-800' : 'text-white'}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
