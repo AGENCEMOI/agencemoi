@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Info, Zap, Crown, Star, MapPin } from 'lucide-react';
+import { Check, Info, Zap, Crown, Star, MapPin, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define TypeScript interfaces to fix type issues
 interface FormData {
@@ -86,6 +87,7 @@ const RegistrationForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isGeolocating, setIsGeolocating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Geolocation based on postal code
   useEffect(() => {
@@ -217,6 +219,73 @@ const RegistrationForm = () => {
     setFormErrors(prev => ({ ...prev, selectedPlan: null }));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateStep(step)) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez remplir tous les champs obligatoires pour continuer.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase
+        .from('professionals')
+        .insert({
+          selected_plan: formData.selectedPlan,
+          company_name: formData.companyName,
+          siret: formData.siret,
+          address: formData.address,
+          postal_code: formData.postalCode,
+          city: formData.city,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          contact_name: formData.contactName,
+          contact_phone: formData.contactPhone,
+          contact_email: formData.contactEmail,
+          website: formData.website || null,
+          entity_type: formData.entityType,
+          current_promotions: formData.currentPromotions || null,
+          bank_name: formData.bankName,
+          bank_iban: formData.bankIban,
+          bank_payment_date: formData.bankPaymentDate,
+          terms_accepted: formData.termsAccepted,
+          sepa_mandate: formData.sepaMandate,
+        });
+
+      if (error) {
+        console.error('Error saving professional:', error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSubmitted(true);
+      
+      toast({
+        title: "Inscription réussie !",
+        description: "Votre demande d'inscription a été enregistrée. Nous vous contacterons prochainement.",
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const renderFormStep0 = () => (
     <div className="animate-fade-in">
       <div className="text-center mb-8">
@@ -344,33 +413,6 @@ const RegistrationForm = () => {
     </div>
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateStep(step)) {
-      toast({
-        title: "Formulaire incomplet",
-        description: "Veuillez remplir tous les champs obligatoires pour continuer.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Add email destination
-    const recipientEmail = '123.agencemoi@gmail.com';
-    console.log('Professional form submitted:', formData);
-    console.log(`Form data will be sent to: ${recipientEmail}`);
-    
-    // In a real implementation, you would send the form data to the email
-    // For now, we'll simulate it with a toast notification
-    
-    setSubmitted(true);
-    
-    toast({
-      title: "Inscription réussie !",
-      description: `Votre demande d'inscription a été envoyée à ${recipientEmail}. Nous vous contacterons prochainement pour finaliser votre partenariat.`,
-    });
-  };
 
   const renderFormStep1 = () => (
     <div className="animate-fade-in space-y-6">
@@ -842,9 +884,17 @@ const RegistrationForm = () => {
             ) : (
               <button
                 type="submit"
-                className="btn-primary"
+                className="btn-primary flex items-center space-x-2"
+                disabled={isSubmitting}
               >
-                Finaliser l'inscription
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Inscription en cours...</span>
+                  </>
+                ) : (
+                  <span>Finaliser l'inscription</span>
+                )}
               </button>
             )}
           </div>
