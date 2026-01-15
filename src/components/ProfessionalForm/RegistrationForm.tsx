@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Info } from 'lucide-react';
+import { Check, Info, Zap, Crown, Star } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Link } from 'react-router-dom';
 
 // Define TypeScript interfaces to fix type issues
 interface FormData {
@@ -534,17 +535,108 @@ const RegistrationForm = () => {
   );
 
   const renderSuccessMessage = () => (
-    <div className="text-center py-12 animate-scale-in">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-        <Check className="h-10 w-10 text-green-600" />
+    <div className="animate-scale-in">
+      <div className="text-center py-8 mb-8">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+          <Check className="h-10 w-10 text-green-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-agence-gray-800 mb-4">Inscription réussie !</h2>
+        <p className="text-agence-gray-600 max-w-md mx-auto">
+          Votre demande d'inscription a été envoyée avec succès. Choisissez maintenant votre formule pour recevoir des leads qualifiés.
+        </p>
       </div>
-      <h2 className="text-2xl font-bold text-agence-gray-800 mb-4">Inscription réussie !</h2>
-      <p className="text-agence-gray-600 max-w-md mx-auto mb-8">
-        Votre demande d'inscription a été envoyée avec succès. Notre équipe va étudier votre candidature et reviendra vers vous dans les meilleurs délais.
-      </p>
-      <a href="/" className="btn-primary inline-flex">
-        Retour à l'accueil
-      </a>
+
+      {/* Pricing Grid */}
+      <div className="bg-agence-gray-800 rounded-2xl p-8 text-white">
+        <div className="text-center mb-8">
+          <h3 className="text-2xl font-semibold mb-2">
+            Choisissez votre formule
+          </h3>
+          <p className="text-agence-gray-300">
+            Développez votre activité avec des leads qualifiés
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Option à la carte */}
+          <div className="bg-agence-gray-700/50 backdrop-blur-sm rounded-xl p-6 border border-agence-gray-600 hover:border-agence-orange-500/50 transition-all duration-300">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-agence-orange-500/20 p-2 rounded-full">
+                <Zap className="h-5 w-5 text-agence-orange-500" />
+              </div>
+              <h4 className="text-lg font-semibold">À la carte</h4>
+            </div>
+            <div className="mb-4">
+              <span className="text-3xl font-bold">10€</span>
+              <span className="text-agence-gray-400 ml-2">/ mise en relation</span>
+            </div>
+            <ul className="space-y-3 mb-6 text-sm">
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-agence-gray-300">Paiement par lead</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-agence-gray-300">Sans engagement</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-agence-gray-300">Leads qualifiés</span>
+              </li>
+            </ul>
+            <button className="w-full py-2 px-4 rounded-lg border-2 border-agence-orange-500 text-agence-orange-500 font-semibold hover:bg-agence-orange-500 hover:text-white transition-all duration-300">
+              Choisir cette formule
+            </button>
+          </div>
+
+          {/* Option Premium */}
+          <div className="bg-gradient-to-br from-agence-orange-500/20 to-agence-orange-600/10 rounded-xl p-6 border-2 border-agence-orange-500 relative">
+            <div className="absolute top-3 right-3">
+              <span className="bg-agence-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center space-x-1">
+                <Star className="h-3 w-3" />
+                <span>RECOMMANDÉ</span>
+              </span>
+            </div>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-agence-orange-500 p-2 rounded-full">
+                <Crown className="h-5 w-5 text-white" />
+              </div>
+              <h4 className="text-lg font-semibold">Premium Pro</h4>
+            </div>
+            <div className="mb-4">
+              <span className="text-3xl font-bold">100€</span>
+              <span className="text-agence-gray-400 ml-2">/ mois</span>
+            </div>
+            <ul className="space-y-3 mb-6 text-sm">
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-white font-medium">Leads illimités</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-white font-medium">Visibilité prioritaire</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-white font-medium">Badge Premium</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Check className="h-4 w-4 text-agence-orange-500" />
+                <span className="text-white font-medium">Support prioritaire</span>
+              </li>
+            </ul>
+            <button className="w-full py-2 px-4 rounded-lg bg-agence-orange-500 text-white font-semibold hover:bg-agence-orange-600 transition-all duration-300 shadow-lg shadow-agence-orange-500/30">
+              Devenir Premium
+            </button>
+          </div>
+        </div>
+
+        <div className="text-center mt-8">
+          <Link to="/" className="text-agence-gray-400 hover:text-white transition-colors text-sm">
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
     </div>
   );
 
