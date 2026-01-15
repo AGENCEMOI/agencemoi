@@ -14,7 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      client_leads: {
+        Row: {
+          address: string
+          budget_range: string | null
+          city: string
+          created_at: string
+          description: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          latitude: number | null
+          longitude: number | null
+          phone: string
+          postal_code: string
+          project_type: string | null
+          status: string
+          timeline: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          budget_range?: string | null
+          city: string
+          created_at?: string
+          description?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          latitude?: number | null
+          longitude?: number | null
+          phone: string
+          postal_code: string
+          project_type?: string | null
+          status?: string
+          timeline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          budget_range?: string | null
+          city?: string
+          created_at?: string
+          description?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string
+          postal_code?: string
+          project_type?: string | null
+          status?: string
+          timeline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lead_assignments: {
+        Row: {
+          created_at: string
+          distance_km: number | null
+          id: string
+          lead_id: string
+          professional_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          distance_km?: number | null
+          id?: string
+          lead_id: string
+          professional_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          distance_km?: number | null
+          id?: string
+          lead_id?: string
+          professional_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "client_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_assignments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professionals: {
+        Row: {
+          address: string
+          bank_iban: string
+          bank_name: string
+          bank_payment_date: string
+          city: string
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          current_promotions: string | null
+          entity_type: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          postal_code: string
+          selected_plan: string
+          sepa_mandate: boolean
+          siret: string
+          status: string
+          terms_accepted: boolean
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address: string
+          bank_iban: string
+          bank_name: string
+          bank_payment_date: string
+          city: string
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          current_promotions?: string | null
+          entity_type: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          postal_code: string
+          selected_plan: string
+          sepa_mandate?: boolean
+          siret: string
+          status?: string
+          terms_accepted?: boolean
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          bank_iban?: string
+          bank_name?: string
+          bank_payment_date?: string
+          city?: string
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          current_promotions?: string | null
+          entity_type?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          postal_code?: string
+          selected_plan?: string
+          sepa_mandate?: boolean
+          siret?: string
+          status?: string
+          terms_accepted?: boolean
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
