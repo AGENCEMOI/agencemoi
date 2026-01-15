@@ -31,22 +31,22 @@ const Header = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link 
           to="/" 
-          className="flex items-center space-x-2 text-agence-gray-800 hover:text-agence-orange-500 transition-colors"
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
         >
           <span className="font-playfair text-2xl font-bold">
-            <span className={`${isScrolled ? 'text-agence-gray-800' : 'text-white'}`}>AGENCE</span><span className="text-agence-orange-500">MOI</span>
+            <span className={isScrolled ? 'text-agence-gray-800' : 'text-white'}>AGENCE</span><span className="text-agence-orange-500">MOI</span>
           </span>
         </Link>
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-agence-gray-700 hover:text-agence-orange-500 transition-colors">
+          <Link to="/" className={`${isScrolled ? 'text-agence-gray-700' : 'text-white'} hover:text-agence-orange-500 transition-colors`}>
             Accueil
           </Link>
-          <Link to="/comment-ca-marche" className="text-agence-gray-700 hover:text-agence-orange-500 transition-colors">
+          <Link to="/comment-ca-marche" className={`${isScrolled ? 'text-agence-gray-700' : 'text-white'} hover:text-agence-orange-500 transition-colors`}>
             Comment ça marche
           </Link>
-          <Link to="/professional-form" className="text-agence-gray-700 hover:text-agence-orange-500 transition-colors">
+          <Link to="/professional-form" className={`${isScrolled ? 'text-agence-gray-700' : 'text-white'} hover:text-agence-orange-500 transition-colors`}>
             Professionnels
           </Link>
           <Link 
@@ -59,7 +59,7 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <button 
-          className="md:hidden text-agence-gray-800"
+          className={`md:hidden ${isScrolled ? 'text-agence-gray-800' : 'text-white'}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
