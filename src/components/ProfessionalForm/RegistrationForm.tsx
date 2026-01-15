@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Info, Zap, Crown, Star } from 'lucide-react';
+import { Check, Info, Zap, Crown, Star, MapPin } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -13,11 +13,14 @@ import { Link } from 'react-router-dom';
 
 // Define TypeScript interfaces to fix type issues
 interface FormData {
+  selectedPlan: 'carte' | 'premium' | '';
   companyName: string;
   siret: string;
   address: string;
   postalCode: string;
   city: string;
+  latitude: number | null;
+  longitude: number | null;
   contactName: string;
   contactPhone: string;
   contactEmail: string;
@@ -35,6 +38,7 @@ interface FormData {
 }
 
 interface FormErrors {
+  selectedPlan?: string | null;
   companyName?: string | null;
   siret?: string | null;
   address?: string | null;
@@ -54,13 +58,16 @@ interface FormErrors {
 
 const RegistrationForm = () => {
   const { toast } = useToast();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at step 0 (plan selection)
   const [formData, setFormData] = useState<FormData>({
+    selectedPlan: '',
     companyName: '',
     siret: '',
     address: '',
     postalCode: '',
     city: '',
+    latitude: null,
+    longitude: null,
     contactName: '',
     contactPhone: '',
     contactEmail: '',
@@ -78,6 +85,41 @@ const RegistrationForm = () => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isGeolocating, setIsGeolocating] = useState(false);
+
+  // Geolocation based on postal code
+  useEffect(() => {
+    const geocodeAddress = async () => {
+      if (formData.postalCode.length === 5 && formData.city) {
+        setIsGeolocating(true);
+        try {
+          const response = await fetch(
+            `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(formData.postalCode + ' ' + formData.city)}&limit=1`
+          );
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            const [lng, lat] = data.features[0].geometry.coordinates;
+            setFormData(prev => ({
+              ...prev,
+              latitude: lat,
+              longitude: lng
+            }));
+            toast({
+              title: "Géolocalisation réussie",
+              description: `Votre entreprise sera visible dans la zone de ${formData.city}`,
+            });
+          }
+        } catch (error) {
+          console.error('Geocoding error:', error);
+        } finally {
+          setIsGeolocating(false);
+        }
+      }
+    };
+
+    const debounce = setTimeout(geocodeAddress, 500);
+    return () => clearTimeout(debounce);
+  }, [formData.postalCode, formData.city]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -114,8 +156,13 @@ const RegistrationForm = () => {
   const validateStep = (stepNumber: number) => {
     const errors: FormErrors = {};
     
+    // Validate step 0 - Plan selection
+    if (stepNumber === 0) {
+      if (!formData.selectedPlan) errors.selectedPlan = "Veuillez choisir une formule";
+    }
+    
     // Validate step 1 - Business info
-    if (stepNumber === 1) {
+    else if (stepNumber === 1) {
       if (!formData.companyName.trim()) errors.companyName = "Nom de l'entreprise requis";
       if (!formData.siret.trim()) errors.siret = "Numéro SIRET requis";
       if (!formData.address.trim()) errors.address = "Adresse requise";
@@ -147,7 +194,7 @@ const RegistrationForm = () => {
     if (!validateStep(step)) {
       toast({
         title: "Formulaire incomplet",
-        description: "Veuillez remplir tous les champs obligatoires pour continuer.",
+        description: step === 0 ? "Veuillez choisir une formule pour continuer." : "Veuillez remplir tous les champs obligatoires pour continuer.",
         variant: "destructive"
       });
       return;
@@ -160,10 +207,142 @@ const RegistrationForm = () => {
   };
 
   const prevStep = () => {
-    if (step > 1) {
+    if (step > 0) {
       setStep(step - 1);
     }
   };
+
+  const selectPlan = (plan: 'carte' | 'premium') => {
+    setFormData(prev => ({ ...prev, selectedPlan: plan }));
+    setFormErrors(prev => ({ ...prev, selectedPlan: null }));
+  };
+
+  const renderFormStep0 = () => (
+    <div className="animate-fade-in">
+      <div className="text-center mb-8">
+        <h3 className="text-2xl font-semibold mb-2 text-agence-gray-800">
+          Choisissez votre formule
+        </h3>
+        <p className="text-agence-gray-600">
+          Sélectionnez la formule qui correspond le mieux à vos besoins pour commencer votre inscription
+        </p>
+      </div>
+
+      {formErrors.selectedPlan && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-center">
+          {formErrors.selectedPlan}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Option à la carte */}
+        <div 
+          onClick={() => selectPlan('carte')}
+          className={`cursor-pointer rounded-xl p-6 border-2 transition-all duration-300 ${
+            formData.selectedPlan === 'carte' 
+              ? 'border-agence-orange-500 bg-agence-orange-50 shadow-lg' 
+              : 'border-agence-gray-200 bg-white hover:border-agence-orange-300 hover:shadow-md'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-full ${formData.selectedPlan === 'carte' ? 'bg-agence-orange-500' : 'bg-agence-gray-100'}`}>
+                <Zap className={`h-5 w-5 ${formData.selectedPlan === 'carte' ? 'text-white' : 'text-agence-gray-500'}`} />
+              </div>
+              <h4 className="text-lg font-semibold text-agence-gray-800">À la carte</h4>
+            </div>
+            {formData.selectedPlan === 'carte' && (
+              <div className="bg-agence-orange-500 rounded-full p-1">
+                <Check className="h-4 w-4 text-white" />
+              </div>
+            )}
+          </div>
+          <div className="mb-4">
+            <span className="text-3xl font-bold text-agence-gray-800">10€</span>
+            <span className="text-agence-gray-500 ml-2">/ mise en relation</span>
+          </div>
+          <ul className="space-y-3 text-sm">
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600">Paiement par lead</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600">Sans engagement</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600">Leads qualifiés</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Option Premium */}
+        <div 
+          onClick={() => selectPlan('premium')}
+          className={`cursor-pointer rounded-xl p-6 border-2 relative transition-all duration-300 ${
+            formData.selectedPlan === 'premium' 
+              ? 'border-agence-orange-500 bg-gradient-to-br from-agence-orange-50 to-agence-orange-100 shadow-lg' 
+              : 'border-agence-gray-200 bg-white hover:border-agence-orange-300 hover:shadow-md'
+          }`}
+        >
+          <div className="absolute top-3 right-3">
+            <span className="bg-agence-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center space-x-1">
+              <Star className="h-3 w-3" />
+              <span>RECOMMANDÉ</span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-full ${formData.selectedPlan === 'premium' ? 'bg-agence-orange-500' : 'bg-agence-gray-100'}`}>
+                <Crown className={`h-5 w-5 ${formData.selectedPlan === 'premium' ? 'text-white' : 'text-agence-gray-500'}`} />
+              </div>
+              <h4 className="text-lg font-semibold text-agence-gray-800">Premium Pro</h4>
+            </div>
+            {formData.selectedPlan === 'premium' && (
+              <div className="bg-agence-orange-500 rounded-full p-1">
+                <Check className="h-4 w-4 text-white" />
+              </div>
+            )}
+          </div>
+          <div className="mb-4">
+            <span className="text-3xl font-bold text-agence-gray-800">100€</span>
+            <span className="text-agence-gray-500 ml-2">/ mois</span>
+          </div>
+          <ul className="space-y-3 text-sm">
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600 font-medium">Leads illimités</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600 font-medium">Visibilité prioritaire</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600 font-medium">Badge Premium</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <Check className="h-4 w-4 text-agence-orange-500" />
+              <span className="text-agence-gray-600 font-medium">Support prioritaire</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-8 p-4 bg-agence-gray-50 rounded-lg border border-agence-gray-200">
+        <div className="flex">
+          <Info className="h-5 w-5 text-agence-orange-500 mr-3 flex-shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-agence-gray-800 mb-1">Géolocalisation automatique</h4>
+            <p className="text-sm text-agence-gray-600">
+              Votre entreprise sera automatiquement géolocalisée lors de l'inscription pour apparaître aux clients de votre zone.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -514,101 +693,34 @@ const RegistrationForm = () => {
           <Check className="h-10 w-10 text-green-600" />
         </div>
         <h2 className="text-2xl font-bold text-agence-gray-800 mb-4">Inscription réussie !</h2>
-        <p className="text-agence-gray-600 max-w-md mx-auto">
-          Votre demande d'inscription a été envoyée avec succès. Choisissez maintenant votre formule pour recevoir des leads qualifiés.
+        <p className="text-agence-gray-600 max-w-md mx-auto mb-6">
+          Votre demande d'inscription a été envoyée avec succès. Nous vous contacterons prochainement pour finaliser votre partenariat.
         </p>
+        
+        {/* Selected Plan Summary */}
+        <div className="inline-flex items-center space-x-3 bg-agence-orange-100 text-agence-orange-700 px-6 py-3 rounded-full">
+          {formData.selectedPlan === 'premium' ? (
+            <Crown className="h-5 w-5" />
+          ) : (
+            <Zap className="h-5 w-5" />
+          )}
+          <span className="font-bold text-lg">
+            {formData.selectedPlan === 'carte' ? 'Formule À la carte - 10€/lead' : 'Formule Premium Pro - 100€/mois'}
+          </span>
+        </div>
+
+        {formData.latitude && formData.longitude && (
+          <div className="mt-4 inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium">
+            <MapPin className="h-4 w-4" />
+            <span>Votre entreprise sera visible dans la zone de {formData.city}</span>
+          </div>
+        )}
       </div>
 
-      {/* Pricing Grid */}
-      <div className="bg-agence-gray-800 rounded-2xl p-8 text-white">
-        <div className="text-center mb-8">
-          <h3 className="text-2xl font-semibold mb-2">
-            Choisissez votre formule
-          </h3>
-          <p className="text-agence-gray-300">
-            Développez votre activité avec des leads qualifiés
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Option à la carte */}
-          <div className="bg-agence-gray-700/50 backdrop-blur-sm rounded-xl p-6 border border-agence-gray-600 hover:border-agence-orange-500/50 transition-all duration-300">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-agence-orange-500/20 p-2 rounded-full">
-                <Zap className="h-5 w-5 text-agence-orange-500" />
-              </div>
-              <h4 className="text-lg font-semibold">À la carte</h4>
-            </div>
-            <div className="mb-4">
-              <span className="text-3xl font-bold">10€</span>
-              <span className="text-agence-gray-400 ml-2">/ mise en relation</span>
-            </div>
-            <ul className="space-y-3 mb-6 text-sm">
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-agence-gray-300">Paiement par lead</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-agence-gray-300">Sans engagement</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-agence-gray-300">Leads qualifiés</span>
-              </li>
-            </ul>
-            <button className="w-full py-2 px-4 rounded-lg border-2 border-agence-orange-500 text-agence-orange-500 font-semibold hover:bg-agence-orange-500 hover:text-white transition-all duration-300">
-              Choisir cette formule
-            </button>
-          </div>
-
-          {/* Option Premium */}
-          <div className="bg-gradient-to-br from-agence-orange-500/20 to-agence-orange-600/10 rounded-xl p-6 border-2 border-agence-orange-500 relative">
-            <div className="absolute top-3 right-3">
-              <span className="bg-agence-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center space-x-1">
-                <Star className="h-3 w-3" />
-                <span>RECOMMANDÉ</span>
-              </span>
-            </div>
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-agence-orange-500 p-2 rounded-full">
-                <Crown className="h-5 w-5 text-white" />
-              </div>
-              <h4 className="text-lg font-semibold">Premium Pro</h4>
-            </div>
-            <div className="mb-4">
-              <span className="text-3xl font-bold">100€</span>
-              <span className="text-agence-gray-400 ml-2">/ mois</span>
-            </div>
-            <ul className="space-y-3 mb-6 text-sm">
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-white font-medium">Leads illimités</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-white font-medium">Visibilité prioritaire</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-white font-medium">Badge Premium</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Check className="h-4 w-4 text-agence-orange-500" />
-                <span className="text-white font-medium">Support prioritaire</span>
-              </li>
-            </ul>
-            <button className="w-full py-2 px-4 rounded-lg bg-agence-orange-500 text-white font-semibold hover:bg-agence-orange-600 transition-all duration-300 shadow-lg shadow-agence-orange-500/30">
-              Devenir Premium
-            </button>
-          </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <Link to="/" className="text-agence-gray-400 hover:text-white transition-colors text-sm">
-            Retour à l'accueil
-          </Link>
-        </div>
+      <div className="text-center">
+        <Link to="/" className="btn-primary inline-block">
+          Retour à l'accueil
+        </Link>
       </div>
     </div>
   );
@@ -619,6 +731,8 @@ const RegistrationForm = () => {
     }
     
     switch (step) {
+      case 0:
+        return renderFormStep0();
       case 1:
         return renderFormStep1();
       case 2:
@@ -632,7 +746,7 @@ const RegistrationForm = () => {
 
   return (
     <div className="max-w-3xl mx-auto">
-      {!submitted && (
+      {!submitted && step > 0 && (
         <div className="flex mb-8 border-b border-agence-gray-200">
           <button
             className={`flex-1 text-center py-4 px-2 font-medium ${
@@ -650,7 +764,7 @@ const RegistrationForm = () => {
             onClick={() => step >= 2 && setStep(2)}
             disabled={step < 2}
           >
-            2. Produits
+            2. Activité
           </button>
           <button
             className={`flex-1 text-center py-4 px-2 font-medium ${
@@ -663,19 +777,55 @@ const RegistrationForm = () => {
           </button>
         </div>
       )}
+
+      {!submitted && step === 0 && (
+        <div className="mb-6 text-center">
+          <div className="inline-flex items-center space-x-2 bg-agence-orange-100 text-agence-orange-700 px-4 py-2 rounded-full text-sm font-medium">
+            <span>Formule choisie :</span>
+            <span className="font-bold">
+              {formData.selectedPlan === 'carte' && 'À la carte (10€/lead)'}
+              {formData.selectedPlan === 'premium' && 'Premium Pro (100€/mois)'}
+              {!formData.selectedPlan && 'Aucune'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {!submitted && step > 0 && (
+        <div className="mb-6 flex items-center justify-between">
+          <div className="inline-flex items-center space-x-2 bg-agence-orange-100 text-agence-orange-700 px-4 py-2 rounded-full text-sm font-medium">
+            <span>Formule :</span>
+            <span className="font-bold">
+              {formData.selectedPlan === 'carte' ? 'À la carte (10€/lead)' : 'Premium Pro (100€/mois)'}
+            </span>
+          </div>
+          {formData.latitude && formData.longitude && (
+            <div className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium">
+              <MapPin className="h-4 w-4" />
+              <span>Géolocalisé</span>
+            </div>
+          )}
+          {isGeolocating && (
+            <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-700 border-t-transparent rounded-full"></div>
+              <span>Géolocalisation...</span>
+            </div>
+          )}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className={`bg-white rounded-xl p-6 md:p-8 shadow-sm border border-agence-gray-200 ${submitted ? 'bg-agence-gray-50' : ''}`}>
         {renderCurrentStep()}
         
         {!submitted && (
           <div className="mt-8 flex justify-between">
-            {step > 1 ? (
+            {step > 0 ? (
               <button
                 type="button"
                 onClick={prevStep}
                 className="px-6 py-2 border border-agence-gray-300 rounded-full text-agence-gray-700 hover:bg-agence-gray-100 transition-colors"
               >
-                Précédent
+                {step === 1 ? 'Changer de formule' : 'Précédent'}
               </button>
             ) : (
               <div></div>
@@ -687,7 +837,7 @@ const RegistrationForm = () => {
                 onClick={nextStep}
                 className="btn-primary"
               >
-                Suivant
+                {step === 0 ? 'Commencer l\'inscription' : 'Suivant'}
               </button>
             ) : (
               <button
