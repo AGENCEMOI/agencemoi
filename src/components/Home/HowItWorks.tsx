@@ -7,18 +7,18 @@ const HowItWorks = () => {
   const steps = [
     {
       icon: <FileText className="h-16 w-16 text-white" />,
-      title: "Remplissez le formulaire",
-      description: "Décrivez votre projet d'aménagement intérieur et vos besoins spécifiques en quelques minutes."
+      title: "Déposez votre projet",
+      description: "Répondez à notre QCM intelligent pour décrire précisément votre projet d'aménagement intérieur."
     },
     {
       icon: <Users className="h-16 w-16 text-white" />,
-      title: "Sélection des professionnels",
-      description: "Notre algorithme identifie les cuisinistes et agenceurs les plus adaptés à votre projet."
+      title: "Choisissez vos pros",
+      description: "Sélectionnez entre 3 et 5 professionnels vérifiés parmi notre réseau national de partenaires."
     },
     {
       icon: <Clock className="h-16 w-16 text-white" />,
       title: "Recevez vos devis",
-      description: "Jusqu'à trois professionnels vous contactent en 1 à 3 jours ouvrables avec des propositions personnalisées."
+      description: "Comparez plusieurs devis personnalisés et choisissez le professionnel idéal pour votre projet."
     }
   ];
 

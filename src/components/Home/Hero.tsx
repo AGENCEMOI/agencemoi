@@ -25,13 +25,13 @@ const Hero = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl">
           <span className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white text-sm font-medium mb-6 animate-fade-in">
-            Trouvez le meilleur cuisiniste près de chez vous
+            🇫🇷 Application mobile & site web • Marché national français
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight animate-slide-in-up">
-            Des <span className="text-agence-orange-500">cuisinistes qualifiés</span> pour votre projet sur mesure
+            Trouvez les <span className="text-agence-orange-500">meilleurs professionnels</span> de l'aménagement intérieur
           </h1>
           <p className="text-lg md:text-xl text-agence-gray-200 mb-8 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
-            Comparez jusqu'à trois devis personnalisés et gratuits de professionnels qualifiés pour votre cuisine, bibliothèque ou salle de bain en 1 à 3 jours ouvrables.
+            Déposez votre projet via notre QCM intelligent, sélectionnez 3 à 5 professionnels et recevez plusieurs devis personnalisés. Service 100% gratuit pour les particuliers.
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-slide-in-up" style={{animationDelay: '0.4s'}}>
             <Link 

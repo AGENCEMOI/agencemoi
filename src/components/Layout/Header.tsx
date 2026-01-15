@@ -34,7 +34,7 @@ const Header = () => {
           className="flex items-center space-x-2 text-agence-gray-800 hover:text-agence-orange-500 transition-colors"
         >
           <span className="font-playfair text-2xl font-bold">
-            AGENCE<span className="text-agence-orange-500">MOI</span>
+            <span className={`${isScrolled ? 'text-agence-gray-800' : 'text-white'}`}>AGENCE</span><span className="text-agence-orange-500">MOI</span>
           </span>
         </Link>
 

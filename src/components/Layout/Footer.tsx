@@ -11,11 +11,11 @@ const Footer = () => {
           <div className="space-y-6">
             <Link to="/" className="inline-block">
               <span className="font-playfair text-2xl font-bold">
-                AGENCE<span className="text-agence-orange-500">MOI</span>
+                <span className="text-white">AGENCE</span><span className="text-agence-orange-500">MOI</span>
               </span>
             </Link>
             <p className="text-agence-gray-300 max-w-xs">
-              Nous simplifions la recherche de professionnels pour vos projets d'agencement intérieur avec une mise en relation rapide et efficace.
+              Application mobile et site web de mise en relation entre particuliers et professionnels de l'aménagement intérieur sur tout le territoire français.
             </p>
           </div>
 
