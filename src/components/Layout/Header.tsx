@@ -1,11 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +20,43 @@ const Header = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data, error } = await supabase.rpc('has_role', {
+            _user_id: session.user.id,
+            _role: 'admin'
+          });
+          if (!error && data === true) {
+            setIsAdmin(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking admin status:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: session.user.id,
+          _role: 'admin'
+        });
+        setIsAdmin(!error && data === true);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
@@ -59,6 +98,15 @@ const Header = () => {
           >
             Professionnels
           </Link>
+          {isAdmin && (
+            <Link 
+              to="/admin-dashboard" 
+              className={`transition-colors duration-500 hover:text-agence-orange-500 flex items-center gap-1 ${isScrolled ? 'text-agence-gray-700' : 'text-white'}`}
+            >
+              <Shield size={16} />
+              Admin
+            </Link>
+          )}
           <Link 
             to="/client-form" 
             className="btn-primary transition-transform duration-300 hover:scale-105"
@@ -101,6 +149,16 @@ const Header = () => {
             >
               Professionnels
             </Link>
+            {isAdmin && (
+              <Link 
+                to="/admin-dashboard" 
+                className="text-agence-gray-700 hover:text-agence-orange-500 transition-colors py-2 border-b border-agence-gray-100 flex items-center gap-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Shield size={16} />
+                Admin
+              </Link>
+            )}
             <Link 
               to="/client-form" 
               className="btn-primary text-center"
