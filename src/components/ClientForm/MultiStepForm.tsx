@@ -20,19 +20,93 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const distance = R * c;
-  return distance;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 };
+
+// Reusable UI helpers
+const ToggleButton = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 text-sm ${
+      selected
+        ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700 font-medium'
+        : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+    }`}
+  >
+    {selected && <Check size={14} />}
+    {label}
+  </button>
+);
+
+const RadioOption = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`p-3 border rounded-lg text-center transition-all text-sm ${
+      selected
+        ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700 font-medium'
+        : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const SectionTitle = ({ icon, title }: { icon: string; title: string }) => (
+  <h4 className="text-lg font-semibold text-agence-gray-800 mt-8 mb-4 flex items-center gap-2">
+    <span>{icon}</span> {title}
+  </h4>
+);
+
+// Appliance component with "Je conserve" / "À prévoir" toggle + sub-options
+const ApplianceField = ({
+  label,
+  keepValue,
+  onKeepChange,
+  subOptions,
+  selectedSubs,
+  onSubChange,
+}: {
+  label: string;
+  keepValue: 'keep' | 'new' | '';
+  onKeepChange: (v: 'keep' | 'new') => void;
+  subOptions?: string[];
+  selectedSubs?: string[];
+  onSubChange?: (v: string) => void;
+}) => (
+  <div className="border border-agence-gray-200 rounded-lg p-4 bg-white">
+    <p className="font-medium text-agence-gray-800 mb-3">{label}</p>
+    <div className="grid grid-cols-2 gap-2 mb-2">
+      <RadioOption label="🔄 Je conserve le mien" selected={keepValue === 'keep'} onClick={() => onKeepChange('keep')} />
+      <RadioOption label="🆕 À prévoir" selected={keepValue === 'new'} onClick={() => onKeepChange('new')} />
+    </div>
+    {keepValue === 'new' && subOptions && subOptions.length > 0 && (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
+        {subOptions.map(opt => (
+          <ToggleButton
+            key={opt}
+            label={opt}
+            selected={selectedSubs?.includes(opt) || false}
+            onClick={() => onSubChange?.(opt)}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+);
 
 const MultiStepForm = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+
+  // ---- Form State ----
   const [formData, setFormData] = useState({
+    // Step 1: Personal info
     firstName: '',
     lastName: '',
     phone: '',
@@ -42,40 +116,69 @@ const MultiStepForm = () => {
     city: '',
     latitude: null as number | null,
     longitude: null as number | null,
-    projectType: '',
-    buildingType: '',
+
+    // Step 2: Housing
+    housingType: '' as 'maison' | 'appartement' | '',
     floor: '',
-    workType: '',
-    serviceType: '',
-    surface: '',
-    startDate: '',
-    budget: '',
-    // Configuration cuisine
-    kitchenLayout: '' as string,
-    kitchenType: '' as string,
-    // Matériaux & Finitions
-    facadeFinish: [] as string[],
-    countertopMaterial: [] as string[],
-    // Électroménager
-    appliances: [] as string[],
-    plateType: '',
-    applianceBrands: '',
-    // Inspirations
+    hasElevator: '' as 'oui' | 'non' | '',
+    buildingOver2Years: '' as 'oui' | 'non' | '',
+
+    // Step 3: Projects
+    projects: [] as string[],
+
+    // ---- CUISINE ----
+    kitchenInstallType: [] as string[],
+    kitchenMealSolution: [] as string[],
+    kitchenPersons: '',
+    kitchenCountertop: [] as string[],
+    // Sanitaire
+    kitchenSinkCuves: [] as string[],
+    kitchenSinkMaterial: [] as string[],
+    kitchenMitigeur: '' as string,
+    // Electromenager
+    ovenKeep: '' as 'keep' | 'new' | '',
+    ovenSubs: [] as string[],
+    hobKeep: '' as 'keep' | 'new' | '',
+    hobSubs: [] as string[],
+    hobFoyers: [] as string[],
+    hoodKeep: '' as 'keep' | 'new' | '',
+    hoodSubs: [] as string[],
+    hoodType: [] as string[],
+    dishwasherKeep: '' as 'keep' | 'new' | '',
+    dishwasherSubs: [] as string[],
+    fridgeKeep: '' as 'keep' | 'new' | '',
+    fridgeSubs: [] as string[],
+    microwaveKeep: '' as 'keep' | 'new' | '',
+    microwaveSubs: [] as string[],
+    coffeeMachineKeep: '' as 'keep' | 'new' | '',
+    wineCellarKeep: '' as 'keep' | 'new' | '',
+    wineCellarSubs: [] as string[],
+    // Prestations
+    kitchenPrestations: [] as string[],
+    kitchenBudget: '',
+
+    // ---- SALLE DE BAIN ----
+    bathroomVasque: '' as string,
+    bathroomColonne: false,
+    bathroomMiroir: '' as string,
+    bathroomAutre: '',
+    bathroomBudget: '',
+
+    // ---- DRESSING ----
+    dressingRoom: '' as string,
+    dressingStructure: '' as string,
+    dressingOpening: '' as string,
+    dressingBudget: '',
+
+    // Documents
+    floorPlan: null as File | null,
+    photos: [] as File[],
+    inspirationPhotos: [] as File[],
     inspirationLinks: '',
     storeReferences: '',
-    // Anciennes données
-    furniture: {
-      colors: '',
-      handles: false
-    },
-    countertop: '',
-    sink: '',
-    faucet: '',
-    layoutNeeds: '',
-    floorPlan: null,
-    photos: [],
-    inspirationPhotos: [],
-    selectedProfessionals: [] as string[]
+
+    // Professionals
+    selectedProfessionals: [] as string[],
   });
 
   const [localProfessionals, setLocalProfessionals] = useState<Professional[]>([]);
@@ -86,7 +189,7 @@ const MultiStepForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeolocating, setIsGeolocating] = useState(false);
 
-  // Fetch professionals from database
+  // Fetch professionals
   useEffect(() => {
     const fetchProfessionals = async () => {
       setIsLoadingPros(true);
@@ -94,19 +197,13 @@ const MultiStepForm = () => {
         .from('professionals')
         .select('id, company_name, entity_type, city, postal_code, latitude, longitude, selected_plan')
         .eq('status', 'approved');
-      
-      if (error) {
-        console.error('Error fetching professionals:', error);
-      } else if (data) {
-        setAllProfessionals(data);
-      }
+      if (!error && data) setAllProfessionals(data);
       setIsLoadingPros(false);
     };
-
     fetchProfessionals();
   }, []);
 
-  // Geocode client address
+  // Geocode
   useEffect(() => {
     const geocodeAddress = async () => {
       if (formData.postalCode.length === 5 && formData.city) {
@@ -116,224 +213,165 @@ const MultiStepForm = () => {
             `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(formData.postalCode + ' ' + formData.city)}&limit=1`
           );
           const data = await response.json();
-          if (data.features && data.features.length > 0) {
+          if (data.features?.length > 0) {
             const [lng, lat] = data.features[0].geometry.coordinates;
-            setFormData(prev => ({
-              ...prev,
-              latitude: lat,
-              longitude: lng
-            }));
+            setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
           }
-        } catch (error) {
-          console.error('Geocoding error:', error);
-        } finally {
-          setIsGeolocating(false);
-        }
+        } catch (error) { console.error('Geocoding error:', error); }
+        finally { setIsGeolocating(false); }
       }
     };
-
     const debounce = setTimeout(geocodeAddress, 500);
     return () => clearTimeout(debounce);
   }, [formData.postalCode, formData.city]);
 
-  // Filter professionals based on location
+  // Filter pros by location
   useEffect(() => {
     if (formData.latitude && formData.longitude && allProfessionals.length > 0) {
-      const professionalsWithDistance = allProfessionals
-        .filter(pro => pro.latitude && pro.longitude)
-        .map(pro => {
-          const distance = calculateDistance(
-            formData.latitude!,
-            formData.longitude!,
-            pro.latitude!,
-            pro.longitude!
-          );
-          return { ...pro, distance: parseFloat(distance.toFixed(1)) };
-        });
+      const withDist = allProfessionals
+        .filter(p => p.latitude && p.longitude)
+        .map(p => ({
+          ...p,
+          distance: parseFloat(calculateDistance(formData.latitude!, formData.longitude!, p.latitude!, p.longitude!).toFixed(1))
+        }));
 
+      const dept = formData.postalCode.substring(0, 2);
       let filtered: Professional[] = [];
-      const departmentCode = formData.postalCode.substring(0, 2);
-
       if (proximity === 'postcode' || proximity === 'both') {
-        const samePostcodeItems = professionalsWithDistance.filter(pro =>
-          pro.postal_code.startsWith(departmentCode)
-        );
-        filtered = [...filtered, ...samePostcodeItems];
+        filtered.push(...withDist.filter(p => p.postal_code.startsWith(dept)));
       }
-
       if (proximity === 'radius' || proximity === 'both') {
-        const radiusItems = professionalsWithDistance.filter(pro =>
-          (pro.distance || 0) <= 50 &&
-          !filtered.some(item => item.id === pro.id)
-        );
-        filtered = [...filtered, ...radiusItems];
+        filtered.push(...withDist.filter(p => (p.distance || 0) <= 50 && !filtered.some(f => f.id === p.id)));
       }
-
       filtered.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-      setLocalProfessionals(filtered.length > 0 ? filtered : professionalsWithDistance.slice(0, 10));
+      setLocalProfessionals(filtered.length > 0 ? filtered : withDist.slice(0, 10));
     }
   }, [formData.latitude, formData.longitude, formData.postalCode, allProfessionals, proximity]);
 
-  useEffect(() => {
-    setSelectedCount(formData.selectedProfessionals.length);
-  }, [formData.selectedProfessionals]);
+  useEffect(() => { setSelectedCount(formData.selectedProfessionals.length); }, [formData.selectedProfessionals]);
 
-  const steps = [
-    { title: 'Infos personnelles' },
-    { title: 'Projet' },
-    { title: 'Configuration' },
-    { title: 'Matériaux' },
-    { title: 'Électroménager' },
-    { title: 'Documents' },
-    { title: 'Professionnels' },
-    { title: 'Confirmation' }
-  ];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...(formData[parent as keyof typeof formData] as object),
-          [child]: value
-        }
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
+  // ---- Dynamic steps ----
+  const getSteps = () => {
+    const steps = [
+      { title: 'Infos', key: 'personal' },
+      { title: 'Logement', key: 'housing' },
+      { title: 'Projets', key: 'projects' },
+    ];
+    if (formData.projects.includes('cuisine')) steps.push({ title: 'Cuisine', key: 'kitchen' });
+    if (formData.projects.includes('salle_de_bain')) steps.push({ title: 'Salle de bain', key: 'bathroom' });
+    if (formData.projects.includes('dressing')) steps.push({ title: 'Dressing', key: 'dressing' });
+    steps.push(
+      { title: 'Documents', key: 'documents' },
+      { title: 'Pros', key: 'professionals' },
+      { title: 'Confirmation', key: 'confirmation' },
+    );
+    return steps;
   };
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...(formData[parent as keyof typeof formData] as object),
-          [child]: checked
-        }
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: checked
-      });
-    }
-  };
+  const steps = getSteps();
 
-  const handleMultiCheckbox = (field: 'facadeFinish' | 'countertopMaterial' | 'appliances', value: string) => {
+  // Helpers
+  const set = (field: string, value: any) => setFormData(prev => ({ ...prev, [field]: value }));
+  const toggleArr = (field: string, value: string) => {
     setFormData(prev => {
-      const currentValues = prev[field];
-      const newValues = currentValues.includes(value)
-        ? currentValues.filter(v => v !== value)
-        : [...currentValues, value];
-      return { ...prev, [field]: newValues };
+      const arr = (prev as any)[field] as string[];
+      return { ...prev, [field]: arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value] };
     });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    set(e.target.name, e.target.value);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const files = e.target.files;
     if (!files) return;
-
-    if (fieldName === 'floorPlan') {
-      setFormData({
-        ...formData,
-        floorPlan: files[0]
-      });
-    } else if (fieldName === 'photos') {
-      const selectedPhotos = Array.from(files).slice(0, 3);
-      setFormData({
-        ...formData,
-        photos: selectedPhotos
-      });
-    } else if (fieldName === 'inspirationPhotos') {
-      const selectedPhotos = Array.from(files).slice(0, 5);
-      setFormData({
-        ...formData,
-        inspirationPhotos: selectedPhotos
-      });
-    }
+    if (fieldName === 'floorPlan') set('floorPlan', files[0]);
+    else if (fieldName === 'photos') set('photos', Array.from(files).slice(0, 5));
+    else if (fieldName === 'inspirationPhotos') set('inspirationPhotos', Array.from(files).slice(0, 5));
   };
 
-  const toggleProfessionalSelection = (professionalId: string) => {
-    setFormData(prevData => {
-      const isSelected = prevData.selectedProfessionals.includes(professionalId);
-      let newSelection: string[];
-
-      if (isSelected) {
-        newSelection = prevData.selectedProfessionals.filter(id => id !== professionalId);
-      } else {
-        if (prevData.selectedProfessionals.length < 5) {
-          newSelection = [...prevData.selectedProfessionals, professionalId];
-        } else {
-          toast({
-            title: "Maximum atteint",
-            description: "Vous pouvez sélectionner jusqu'à 5 professionnels.",
-            variant: "destructive"
-          });
-          return prevData;
-        }
+  const toggleProfessionalSelection = (id: string) => {
+    setFormData(prev => {
+      const sel = prev.selectedProfessionals;
+      if (sel.includes(id)) return { ...prev, selectedProfessionals: sel.filter(s => s !== id) };
+      if (sel.length >= 5) {
+        toast({ title: "Maximum atteint", description: "Vous pouvez sélectionner jusqu'à 5 professionnels.", variant: "destructive" });
+        return prev;
       }
-
-      return {
-        ...prevData,
-        selectedProfessionals: newSelection
-      };
+      return { ...prev, selectedProfessionals: [...sel, id] };
     });
   };
 
-  const handleProximityChange = (value: string) => {
-    setProximity(value);
-  };
-
   const nextStep = () => {
-    if (currentStep === 6 && formData.selectedProfessionals.length < 3) {
-      toast({
-        title: "Sélection requise",
-        description: "Veuillez sélectionner au moins 3 professionnels pour continuer.",
-        variant: "destructive"
-      });
+    const proStep = steps.findIndex(s => s.key === 'professionals');
+    if (currentStep === proStep && formData.selectedProfessionals.length < 3) {
+      toast({ title: "Sélection requise", description: "Veuillez sélectionner au moins 3 professionnels.", variant: "destructive" });
       return;
     }
-
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo(0, 0);
-    }
+    if (currentStep < steps.length - 1) { setCurrentStep(currentStep + 1); window.scrollTo(0, 0); }
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      window.scrollTo(0, 0);
-    }
+    if (currentStep > 0) { setCurrentStep(currentStep - 1); window.scrollTo(0, 0); }
   };
 
+  // ---- SUBMIT ----
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
-      // Build description with all kitchen details
-      const description = [
-        formData.layoutNeeds,
-        formData.kitchenLayout && `Configuration: ${formData.kitchenLayout}`,
-        formData.kitchenType && `Type: ${formData.kitchenType}`,
-        formData.facadeFinish.length > 0 && `Façades: ${formData.facadeFinish.join(', ')}`,
-        formData.countertopMaterial.length > 0 && `Plan de travail: ${formData.countertopMaterial.join(', ')}`,
-        formData.appliances.length > 0 && `Électroménager: ${formData.appliances.join(', ')}`,
-        formData.applianceBrands && `Marques souhaitées: ${formData.applianceBrands}`,
-        formData.inspirationLinks && `Inspirations: ${formData.inspirationLinks}`,
-        formData.storeReferences && `Références: ${formData.storeReferences}`,
-      ].filter(Boolean).join('\n');
+      const parts: string[] = [];
+      parts.push(`Logement: ${formData.housingType}${formData.housingType === 'appartement' ? ` / Étage ${formData.floor} / Ascenseur: ${formData.hasElevator}` : ''}`);
+      parts.push(`Bâtiment +2 ans: ${formData.buildingOver2Years}`);
+      parts.push(`Projets: ${formData.projects.join(', ')}`);
+
+      if (formData.projects.includes('cuisine')) {
+        parts.push(`--- CUISINE ---`);
+        if (formData.kitchenInstallType.length) parts.push(`Installation: ${formData.kitchenInstallType.join(', ')}`);
+        if (formData.kitchenMealSolution.length) parts.push(`Solution repas: ${formData.kitchenMealSolution.join(', ')}`);
+        if (formData.kitchenPersons) parts.push(`Personnes: ${formData.kitchenPersons}`);
+        if (formData.kitchenCountertop.length) parts.push(`Plan de travail: ${formData.kitchenCountertop.join(', ')}`);
+        if (formData.kitchenSinkCuves.length) parts.push(`Évier: ${formData.kitchenSinkCuves.join(', ')}`);
+        if (formData.kitchenSinkMaterial.length) parts.push(`Matière évier: ${formData.kitchenSinkMaterial.join(', ')}`);
+        if (formData.kitchenMitigeur) parts.push(`Mitigeur: ${formData.kitchenMitigeur}`);
+        const appliances = [
+          formData.ovenKeep === 'new' ? `Four: ${formData.ovenSubs.join(', ') || 'À prévoir'}` : formData.ovenKeep === 'keep' ? 'Four: conservé' : null,
+          formData.hobKeep === 'new' ? `Plaque: ${formData.hobSubs.join(', ') || 'À prévoir'}${formData.hobFoyers.length ? ` (${formData.hobFoyers.join(', ')} foyers)` : ''}` : formData.hobKeep === 'keep' ? 'Plaque: conservée' : null,
+          formData.hoodKeep === 'new' ? `Hotte: ${formData.hoodSubs.join(', ') || 'À prévoir'}${formData.hoodType.length ? ` - ${formData.hoodType.join(', ')}` : ''}` : formData.hoodKeep === 'keep' ? 'Hotte: conservée' : null,
+          formData.dishwasherKeep === 'new' ? `Lave-vaisselle: ${formData.dishwasherSubs.join(', ') || 'À prévoir'}` : formData.dishwasherKeep === 'keep' ? 'LV: conservé' : null,
+          formData.fridgeKeep === 'new' ? `Réfrigérateur: ${formData.fridgeSubs.join(', ') || 'À prévoir'}` : formData.fridgeKeep === 'keep' ? 'Frigo: conservé' : null,
+          formData.microwaveKeep === 'new' ? `Micro-ondes: ${formData.microwaveSubs.join(', ') || 'À prévoir'}` : formData.microwaveKeep === 'keep' ? 'MO: conservé' : null,
+          formData.coffeeMachineKeep === 'new' ? 'Machine à café: À prévoir' : formData.coffeeMachineKeep === 'keep' ? 'Café: conservé' : null,
+          formData.wineCellarKeep === 'new' ? `Cave à vin: ${formData.wineCellarSubs.join(', ') || 'À prévoir'}` : formData.wineCellarKeep === 'keep' ? 'Cave: conservée' : null,
+        ].filter(Boolean);
+        if (appliances.length) parts.push(`Électroménager: ${appliances.join(' | ')}`);
+        if (formData.kitchenPrestations.length) parts.push(`Prestations: ${formData.kitchenPrestations.join(', ')}`);
+        if (formData.kitchenBudget) parts.push(`Budget cuisine: ${formData.kitchenBudget}`);
+      }
+
+      if (formData.projects.includes('salle_de_bain')) {
+        parts.push(`--- SALLE DE BAIN ---`);
+        if (formData.bathroomVasque) parts.push(`Vasque: ${formData.bathroomVasque}`);
+        if (formData.bathroomColonne) parts.push(`Colonne: Oui`);
+        if (formData.bathroomMiroir) parts.push(`Miroir: ${formData.bathroomMiroir}`);
+        if (formData.bathroomAutre) parts.push(`Autre: ${formData.bathroomAutre}`);
+        if (formData.bathroomBudget) parts.push(`Budget SdB: ${formData.bathroomBudget}`);
+      }
+
+      if (formData.projects.includes('dressing')) {
+        parts.push(`--- DRESSING ---`);
+        if (formData.dressingRoom) parts.push(`Pièce: ${formData.dressingRoom}`);
+        if (formData.dressingStructure) parts.push(`Structure: ${formData.dressingStructure}`);
+        if (formData.dressingOpening) parts.push(`Ouverture: ${formData.dressingOpening}`);
+        if (formData.dressingBudget) parts.push(`Budget dressing: ${formData.dressingBudget}`);
+      }
+
+      if (formData.inspirationLinks) parts.push(`Liens inspiration: ${formData.inspirationLinks}`);
+      if (formData.storeReferences) parts.push(`Références magasin: ${formData.storeReferences}`);
+
+      const description = parts.join('\n');
+      const projectType = formData.projects.join(', ');
 
       const { data: leadData, error: leadError } = await supabase
         .from('client_leads')
@@ -347,830 +385,447 @@ const MultiStepForm = () => {
           city: formData.city,
           latitude: formData.latitude,
           longitude: formData.longitude,
-          project_type: formData.projectType,
-          budget_range: formData.budget,
-          timeline: formData.startDate,
+          project_type: projectType,
+          budget_range: [formData.kitchenBudget, formData.bathroomBudget, formData.dressingBudget].filter(Boolean).join(' | ') || null,
           description: description || null,
         })
         .select()
         .single();
 
       if (leadError) {
-        console.error('Error creating lead:', leadError);
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de l'envoi de votre demande.",
-          variant: "destructive"
-        });
+        toast({ title: "Erreur", description: "Une erreur est survenue lors de l'envoi.", variant: "destructive" });
         return;
       }
 
-      let professionalsToAssign = formData.selectedProfessionals;
-      
-      if (professionalsToAssign.length === 0 && localProfessionals.length > 0) {
-        professionalsToAssign = localProfessionals.slice(0, 3).map(p => p.id);
+      let prosToAssign = formData.selectedProfessionals;
+      if (prosToAssign.length === 0 && localProfessionals.length > 0) {
+        prosToAssign = localProfessionals.slice(0, 3).map(p => p.id);
       }
 
-      if (professionalsToAssign.length > 0 && leadData) {
-        const assignments = professionalsToAssign.map(proId => {
+      if (prosToAssign.length > 0 && leadData) {
+        const assignments = prosToAssign.map(proId => {
           const pro = localProfessionals.find(p => p.id === proId);
-          return {
-            lead_id: leadData.id,
-            professional_id: proId,
-            distance_km: pro?.distance || null,
-          };
+          return { lead_id: leadData.id, professional_id: proId, distance_km: pro?.distance || null };
         });
-
-        const { error: assignmentError } = await supabase
-          .from('lead_assignments')
-          .insert(assignments);
-
-        if (assignmentError) {
-          console.error('Error creating assignments:', assignmentError);
-        }
+        await supabase.from('lead_assignments').insert(assignments);
       }
 
-      toast({
-        title: "Demande envoyée !",
-        description: `Votre demande de devis a été transmise à ${professionalsToAssign.length} professionnel(s). Vous serez contacté sous 24h.`,
-      });
-      
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 3000);
+      toast({ title: "Demande envoyée !", description: `Votre demande a été transmise à ${prosToAssign.length} professionnel(s).` });
+      setTimeout(() => { window.location.href = '/'; }, 3000);
     } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer.",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: "Une erreur est survenue. Veuillez réessayer.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderPersonalInfoStep = () => (
+  // ============ RENDER STEPS ============
+
+  const renderPersonalInfo = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Vos informations personnelles</h3>
-      
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">1️⃣ Informations personnelles</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="firstName" className="form-label">Prénom <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Votre prénom"
-          />
+          <label className="form-label">Prénom <span className="text-red-500">*</span></label>
+          <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} required className="input-field w-full" placeholder="Votre prénom" />
         </div>
-        
         <div>
-          <label htmlFor="lastName" className="form-label">Nom <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Votre nom"
-          />
+          <label className="form-label">Nom <span className="text-red-500">*</span></label>
+          <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} required className="input-field w-full" placeholder="Votre nom" />
         </div>
-        
         <div>
-          <label htmlFor="phone" className="form-label">Téléphone <span className="text-red-500">*</span></label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Votre numéro de téléphone"
-          />
+          <label className="form-label">Téléphone <span className="text-red-500">*</span></label>
+          <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="input-field w-full" placeholder="Votre numéro" />
         </div>
-        
         <div>
-          <label htmlFor="email" className="form-label">Email <span className="text-red-500">*</span></label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Votre adresse email"
-          />
+          <label className="form-label">Email <span className="text-red-500">*</span></label>
+          <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="input-field w-full" placeholder="Votre email" />
         </div>
-        
         <div className="md:col-span-2">
-          <label htmlFor="address" className="form-label">Adresse d'installation <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Adresse où sera réalisée l'installation"
-          />
+          <label className="form-label">Adresse d'installation <span className="text-red-500">*</span></label>
+          <input type="text" name="address" value={formData.address} onChange={handleInputChange} required className="input-field w-full" placeholder="Adresse complète" />
         </div>
-        
         <div>
-          <label htmlFor="postalCode" className="form-label">Code Postal <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            id="postalCode"
-            name="postalCode"
-            value={formData.postalCode}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Code postal"
-          />
+          <label className="form-label">Code Postal <span className="text-red-500">*</span></label>
+          <input type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} required className="input-field w-full" placeholder="Code postal" />
         </div>
-        
         <div>
-          <label htmlFor="city" className="form-label">Ville <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            id="city"
-            name="city"
-            value={formData.city}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-            placeholder="Ville"
-          />
+          <label className="form-label">Ville <span className="text-red-500">*</span></label>
+          <input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="input-field w-full" placeholder="Ville" />
         </div>
       </div>
     </div>
   );
 
-  const renderProjectDetailsStep = () => (
+  const renderHousing = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Détails de votre projet</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">2️⃣ Type de logement</h3>
+      <div className="space-y-6">
         <div>
-          <label htmlFor="projectType" className="form-label">Type de projet <span className="text-red-500">*</span></label>
-          <select
-            id="projectType"
-            name="projectType"
-            value={formData.projectType}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="kitchen">Cuisine</option>
-            <option value="bathroom">Salle de bain</option>
-            <option value="library">Bibliothèque</option>
-            <option value="dressing">Dressing</option>
-            <option value="other">Autre aménagement</option>
-          </select>
+          <label className="form-label mb-3 block">Type de logement <span className="text-red-500">*</span></label>
+          <div className="grid grid-cols-2 gap-3">
+            <RadioOption label="🏠 Maison" selected={formData.housingType === 'maison'} onClick={() => set('housingType', 'maison')} />
+            <RadioOption label="🏢 Appartement" selected={formData.housingType === 'appartement'} onClick={() => set('housingType', 'appartement')} />
+          </div>
         </div>
-        
-        <div>
-          <label htmlFor="buildingType" className="form-label">Type de bâtiment <span className="text-red-500">*</span></label>
-          <select
-            id="buildingType"
-            name="buildingType"
-            value={formData.buildingType}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="house">Maison</option>
-            <option value="apartment">Appartement</option>
-            <option value="professional">Local professionnel</option>
-          </select>
-        </div>
-        
-        {formData.buildingType === 'apartment' && (
-          <div>
-            <label htmlFor="floor" className="form-label">Étage <span className="text-red-500">*</span></label>
-            <input
-              type="number"
-              id="floor"
-              name="floor"
-              value={formData.floor}
-              onChange={handleInputChange}
-              required
-              className="input-field w-full"
-              placeholder="Étage"
-              min="0"
-            />
+
+        {formData.housingType === 'appartement' && (
+          <div className="space-y-6 p-4 border border-agence-gray-200 rounded-lg bg-agence-gray-50">
+            <div>
+              <label className="form-label">Étage</label>
+              <input type="number" name="floor" value={formData.floor} onChange={handleInputChange} className="input-field w-full" placeholder="Étage" min="0" />
+            </div>
+            <div>
+              <label className="form-label mb-3 block">Ascenseur</label>
+              <div className="grid grid-cols-2 gap-3">
+                <RadioOption label="Oui" selected={formData.hasElevator === 'oui'} onClick={() => set('hasElevator', 'oui')} />
+                <RadioOption label="Non" selected={formData.hasElevator === 'non'} onClick={() => set('hasElevator', 'non')} />
+              </div>
+            </div>
           </div>
         )}
-        
-        <div>
-          <label htmlFor="workType" className="form-label">Type de travaux <span className="text-red-500">*</span></label>
-          <select
-            id="workType"
-            name="workType"
-            value={formData.workType}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="install">Installation nouvelle</option>
-            <option value="replace">Remplacement</option>
-            <option value="renovation">Rénovation</option>
-          </select>
-        </div>
-        
-        <div>
-          <label htmlFor="serviceType" className="form-label">Type de prestation <span className="text-red-500">*</span></label>
-          <select
-            id="serviceType"
-            name="serviceType"
-            value={formData.serviceType}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="full">Cuisine + électroménager + pose</option>
-            <option value="noAppliances">Cuisine + pose (sans électroménager)</option>
-            <option value="kitchenOnly">Cuisine seule (sans pose)</option>
-          </select>
-        </div>
-        
-        <div>
-          <label htmlFor="startDate" className="form-label">Démarrage du projet <span className="text-red-500">*</span></label>
-          <select
-            id="startDate"
-            name="startDate"
-            value={formData.startDate}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="lessThan3">Moins de 3 mois</option>
-            <option value="3to6">Entre 3 et 6 mois</option>
-            <option value="moreThan6">Plus de 6 mois</option>
-          </select>
-        </div>
-        
-        <div>
-          <label htmlFor="budget" className="form-label">Budget estimé <span className="text-red-500">*</span></label>
-          <select
-            id="budget"
-            name="budget"
-            value={formData.budget}
-            onChange={handleInputChange}
-            required
-            className="input-field w-full"
-          >
-            <option value="">Sélectionnez</option>
-            <option value="less5k">Moins de 5 000 €</option>
-            <option value="5kTo10k">5 000 € à 10 000 €</option>
-            <option value="10kTo15k">10 000 € à 15 000 €</option>
-            <option value="15kTo20k">15 000 € à 20 000 €</option>
-            <option value="more20k">Plus de 20 000 €</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  );
 
-  const renderConfigurationStep = () => (
-    <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Configuration de la cuisine</h3>
-      
-      <div className="space-y-8">
-        {/* Layout */}
         <div>
-          <label className="form-label mb-3 block">Configuration <span className="text-red-500">*</span></label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {['Linéaire', 'En L', 'En U', 'Avec îlot', 'En parallèle', 'En G'].map((layout) => (
-              <button
-                key={layout}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, kitchenLayout: layout }))}
-                className={`p-4 border rounded-lg text-center transition-all ${
-                  formData.kitchenLayout === layout
-                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
-                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                }`}
-              >
-                {layout}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Kitchen Type */}
-        <div>
-          <label className="form-label mb-3 block">Type de cuisine</label>
+          <label className="form-label mb-3 block">Le bâtiment a-t-il plus de 2 ans ?</label>
           <div className="grid grid-cols-2 gap-3">
-            {['Cuisine ouverte', 'Cuisine fermée', 'Semi-ouverte'].map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, kitchenType: type }))}
-                className={`p-4 border rounded-lg text-center transition-all ${
-                  formData.kitchenType === type
-                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
-                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Surface */}
-        <div>
-          <label htmlFor="surface" className="form-label">Surface estimée <span className="text-red-500">*</span></label>
-          <div className="relative">
-            <input
-              type="number"
-              id="surface"
-              name="surface"
-              value={formData.surface}
-              onChange={handleInputChange}
-              required
-              className="input-field w-full pr-12"
-              placeholder="Surface de la cuisine"
-              min="1"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-agence-gray-500">m²</span>
-          </div>
-        </div>
-
-        {/* Additional needs */}
-        <div>
-          <label htmlFor="layoutNeeds" className="form-label">Besoins en agencement et ambiance recherchée</label>
-          <textarea
-            id="layoutNeeds"
-            name="layoutNeeds"
-            value={formData.layoutNeeds}
-            onChange={handleInputChange}
-            className="input-field w-full resize-none"
-            rows={4}
-            placeholder="Ex: Besoin de beaucoup de rangements, coin repas intégré, style contemporain..."
-          ></textarea>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderMaterialsStep = () => (
-    <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Matériaux & Finitions</h3>
-      
-      <div className="space-y-8">
-        {/* Facade Finish */}
-        <div>
-          <label className="form-label mb-3 block">Façades (plusieurs choix possibles)</label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {['Matte', 'Brillante', 'Bois (aspect)', 'Béton', 'Verre', 'Laquée', 'Stratifiée', 'Autre'].map((finish) => (
-              <button
-                key={finish}
-                type="button"
-                onClick={() => handleMultiCheckbox('facadeFinish', finish)}
-                className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 ${
-                  formData.facadeFinish.includes(finish)
-                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
-                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                }`}
-              >
-                {formData.facadeFinish.includes(finish) && <Check size={16} />}
-                {finish}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Countertop Material */}
-        <div>
-          <label className="form-label mb-3 block">Plan de travail (plusieurs choix possibles)</label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {['Stratifié', 'Quartz', 'Granit', 'Céramique', 'Bois massif', 'Inox', 'Compact', 'Pierre naturelle'].map((material) => (
-              <button
-                key={material}
-                type="button"
-                onClick={() => handleMultiCheckbox('countertopMaterial', material)}
-                className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 ${
-                  formData.countertopMaterial.includes(material)
-                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
-                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                }`}
-              >
-                {formData.countertopMaterial.includes(material) && <Check size={16} />}
-                {material}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Colors */}
-        <div>
-          <label htmlFor="furniture.colors" className="form-label">Coloris de mobilier souhaité</label>
-          <input
-            type="text"
-            id="furniture.colors"
-            name="furniture.colors"
-            value={formData.furniture.colors}
-            onChange={handleInputChange}
-            className="input-field w-full"
-            placeholder="Ex: Blanc mat, Bois naturel, Gris anthracite..."
-          />
-        </div>
-
-        {/* Handles */}
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            id="furniture.handles"
-            name="furniture.handles"
-            checked={formData.furniture.handles}
-            onChange={handleCheckboxChange}
-            className="w-5 h-5 text-agence-orange-500 rounded"
-          />
-          <label htmlFor="furniture.handles" className="form-label cursor-pointer">Meubles avec poignées (sinon système push-to-open)</label>
-        </div>
-
-        {/* Sink & Faucet */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="sink" className="form-label">Évier souhaité</label>
-            <input
-              type="text"
-              id="sink"
-              name="sink"
-              value={formData.sink}
-              onChange={handleInputChange}
-              className="input-field w-full"
-              placeholder="Type et matière de l'évier"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="faucet" className="form-label">Mitigeur souhaité</label>
-            <input
-              type="text"
-              id="faucet"
-              name="faucet"
-              value={formData.faucet}
-              onChange={handleInputChange}
-              className="input-field w-full"
-              placeholder="Type et matière du mitigeur"
-            />
+            <RadioOption label="Oui" selected={formData.buildingOver2Years === 'oui'} onClick={() => set('buildingOver2Years', 'oui')} />
+            <RadioOption label="Non" selected={formData.buildingOver2Years === 'non'} onClick={() => set('buildingOver2Years', 'non')} />
           </div>
         </div>
       </div>
     </div>
   );
 
-  const renderAppliancesStep = () => (
+  const renderProjects = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Électroménager</h3>
-      
-      <div className="space-y-8">
-        {/* Appliances Selection */}
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">3️⃣ Votre / Vos projets</h3>
+      <p className="text-agence-gray-600 mb-4">Sélectionnez un ou plusieurs projets :</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {[
+          { key: 'cuisine', label: '🍳 Cuisine' },
+          { key: 'salle_de_bain', label: '🚿 Salle de bain' },
+          { key: 'dressing', label: '👔 Dressing' },
+          { key: 'meuble_tv', label: '📺 Meuble TV' },
+          { key: 'autre', label: '🔧 Autre agencement' },
+        ].map(p => (
+          <ToggleButton key={p.key} label={p.label} selected={formData.projects.includes(p.key)} onClick={() => toggleArr('projects', p.key)} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderKitchen = () => (
+    <div className="animate-fade-in">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">🔷 Section Cuisine</h3>
+
+      {/* Configuration */}
+      <SectionTitle icon="📐" title="Configuration" />
+      <div className="space-y-6">
         <div>
-          <label className="form-label mb-3 block">Équipements souhaités (plusieurs choix possibles)</label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {['Four', 'Plaque de cuisson', 'Hotte', 'Lave-vaisselle', 'Réfrigérateur', 'Micro-ondes', 'Four vapeur', 'Cave à vin', 'Machine à café encastrable'].map((appliance) => (
-              <button
-                key={appliance}
-                type="button"
-                onClick={() => handleMultiCheckbox('appliances', appliance)}
-                className={`p-3 border rounded-lg text-center transition-all flex items-center justify-center gap-2 ${
-                  formData.appliances.includes(appliance)
-                    ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
-                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                }`}
-              >
-                {formData.appliances.includes(appliance) && <Check size={16} />}
-                {appliance}
-              </button>
+          <label className="form-label mb-3 block">Type d'installation</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {['Linéaire', 'Parallèle', 'Îlot', 'En L', 'En U'].map(v => (
+              <ToggleButton key={v} label={v} selected={formData.kitchenInstallType.includes(v)} onClick={() => toggleArr('kitchenInstallType', v)} />
             ))}
           </div>
         </div>
+        <div>
+          <label className="form-label mb-3 block">Solution repas</label>
+          <div className="grid grid-cols-3 gap-2">
+            {['Îlot', 'Table indépendante', 'Plan snack'].map(v => (
+              <ToggleButton key={v} label={v} selected={formData.kitchenMealSolution.includes(v)} onClick={() => toggleArr('kitchenMealSolution', v)} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="form-label">Nombre de personnes</label>
+          <input type="number" name="kitchenPersons" value={formData.kitchenPersons} onChange={handleInputChange} className="input-field w-full" placeholder="Nombre de personnes dans le foyer" min="1" />
+        </div>
+      </div>
 
-        {/* Plate Type */}
-        {formData.appliances.includes('Plaque de cuisson') && (
-          <div>
-            <label className="form-label mb-3 block">Type de plaque</label>
-            <div className="grid grid-cols-3 gap-3">
-              {['Induction', 'Gaz', 'Vitrocéramique', 'Mixte'].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, plateType: type }))}
-                  className={`p-3 border rounded-lg text-center transition-all ${
-                    formData.plateType === type
-                      ? 'border-agence-orange-500 bg-agence-orange-50 text-agence-orange-700'
-                      : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                  }`}
-                >
-                  {type}
-                </button>
+      {/* Plan de travail */}
+      <SectionTitle icon="🪨" title="Plan de travail" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {['Stratifié', 'Compact', 'Quartz', 'Céramique', 'Pierre naturelle', 'Mixte'].map(v => (
+          <ToggleButton key={v} label={v} selected={formData.kitchenCountertop.includes(v)} onClick={() => toggleArr('kitchenCountertop', v)} />
+        ))}
+      </div>
+
+      {/* Sanitaire */}
+      <SectionTitle icon="🚰" title="Sanitaire" />
+      <div className="space-y-6">
+        <div>
+          <label className="form-label mb-3 block">Évier</label>
+          <div className="grid grid-cols-3 gap-2">
+            {['1 cuve', '1½ cuve', '2 cuves'].map(v => (
+              <ToggleButton key={v} label={v} selected={formData.kitchenSinkCuves.includes(v)} onClick={() => toggleArr('kitchenSinkCuves', v)} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="form-label mb-3 block">Matière</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {['Inox', 'Céramique', 'Granit', 'Autre'].map(v => (
+              <ToggleButton key={v} label={v} selected={formData.kitchenSinkMaterial.includes(v)} onClick={() => toggleArr('kitchenSinkMaterial', v)} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="form-label mb-3 block">Mitigeur</label>
+          <div className="grid grid-cols-2 gap-3">
+            <RadioOption label="Avec douchette" selected={formData.kitchenMitigeur === 'avec_douchette'} onClick={() => set('kitchenMitigeur', 'avec_douchette')} />
+            <RadioOption label="Sans douchette" selected={formData.kitchenMitigeur === 'sans_douchette'} onClick={() => set('kitchenMitigeur', 'sans_douchette')} />
+          </div>
+        </div>
+      </div>
+
+      {/* Électroménager */}
+      <SectionTitle icon="⚡" title="Électroménager" />
+      <div className="space-y-4">
+        <ApplianceField label="Four" keepValue={formData.ovenKeep} onKeepChange={v => set('ovenKeep', v)} subOptions={['Classique', 'Pyrolyse', 'Catalyse']} selectedSubs={formData.ovenSubs} onSubChange={v => toggleArr('ovenSubs', v)} />
+        <ApplianceField label="Table de cuisson" keepValue={formData.hobKeep} onKeepChange={v => set('hobKeep', v)} subOptions={['Induction', 'Mixte', 'Gaz', 'Induction + hotte intégrée', 'Gaz + hotte intégrée']} selectedSubs={formData.hobSubs} onSubChange={v => toggleArr('hobSubs', v)} />
+        {formData.hobKeep === 'new' && (
+          <div className="ml-4">
+            <label className="form-label mb-2 block">Nombre de foyers</label>
+            <div className="grid grid-cols-3 gap-2">
+              {['3', '4', 'Zone flexible'].map(v => (
+                <ToggleButton key={v} label={v} selected={formData.hobFoyers.includes(v)} onClick={() => toggleArr('hobFoyers', v)} />
               ))}
             </div>
           </div>
         )}
-
-        {/* Brands */}
-        <div>
-          <label htmlFor="applianceBrands" className="form-label">Marques souhaitées (si connues)</label>
-          <input
-            type="text"
-            id="applianceBrands"
-            name="applianceBrands"
-            value={formData.applianceBrands}
-            onChange={handleInputChange}
-            className="input-field w-full"
-            placeholder="Ex: Bosch, Siemens, Miele, Samsung..."
-          />
-        </div>
+        <ApplianceField label="Hotte" keepValue={formData.hoodKeep} onKeepChange={v => set('hoodKeep', v)} subOptions={['Décorative', 'Intégrée', 'Casquette', 'Sur plan de travail']} selectedSubs={formData.hoodSubs} onSubChange={v => toggleArr('hoodSubs', v)} />
+        {formData.hoodKeep === 'new' && (
+          <div className="ml-4">
+            <label className="form-label mb-2 block">Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Évacuation externe', 'Recyclage'].map(v => (
+                <ToggleButton key={v} label={v} selected={formData.hoodType.includes(v)} onClick={() => toggleArr('hoodType', v)} />
+              ))}
+            </div>
+          </div>
+        )}
+        <ApplianceField label="Lave-vaisselle" keepValue={formData.dishwasherKeep} onKeepChange={v => set('dishwasherKeep', v)} subOptions={['Pose libre', 'Encastrable', '45 cm', '60 cm']} selectedSubs={formData.dishwasherSubs} onSubChange={v => toggleArr('dishwasherSubs', v)} />
+        <ApplianceField label="Réfrigérateur" keepValue={formData.fridgeKeep} onKeepChange={v => set('fridgeKeep', v)} subOptions={['Pose libre', 'Encastrable', 'Tout utile', 'Combiné', 'Américain', 'Side-by-side']} selectedSubs={formData.fridgeSubs} onSubChange={v => toggleArr('fridgeSubs', v)} />
+        <ApplianceField label="Micro-ondes" keepValue={formData.microwaveKeep} onKeepChange={v => set('microwaveKeep', v)} subOptions={['Pose libre', 'Encastrable']} selectedSubs={formData.microwaveSubs} onSubChange={v => toggleArr('microwaveSubs', v)} />
+        <ApplianceField label="Machine à café" keepValue={formData.coffeeMachineKeep} onKeepChange={v => set('coffeeMachineKeep', v)} />
+        <ApplianceField label="Cave à vin" keepValue={formData.wineCellarKeep} onKeepChange={v => set('wineCellarKeep', v)} subOptions={['Pose libre', 'Encastrable']} selectedSubs={formData.wineCellarSubs} onSubChange={v => toggleArr('wineCellarSubs', v)} />
       </div>
+
+      {/* Prestations */}
+      <SectionTitle icon="🛠️" title="Prestations souhaitées" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {['Démontage ancienne cuisine', 'Livraison', 'Pose', 'Travaux électriques', 'Travaux plomberie'].map(v => (
+          <ToggleButton key={v} label={v} selected={formData.kitchenPrestations.includes(v)} onClick={() => toggleArr('kitchenPrestations', v)} />
+        ))}
+      </div>
+
+      {/* Budget */}
+      <SectionTitle icon="💰" title="Budget cuisine" />
+      <textarea name="kitchenBudget" value={formData.kitchenBudget} onChange={handleInputChange} className="input-field w-full resize-none" rows={2} placeholder="Indiquez votre budget estimé pour la cuisine..." />
     </div>
   );
 
-  const renderDocumentsStep = () => (
+  const renderBathroom = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Documents & Inspirations</h3>
-      
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">🔷 Section Salle de bain</h3>
+
+      <SectionTitle icon="🪞" title="Mobilier" />
+      <div className="space-y-6">
+        <div>
+          <label className="form-label mb-3 block">Meuble vasque</label>
+          <div className="grid grid-cols-2 gap-3">
+            <RadioOption label="Simple vasque" selected={formData.bathroomVasque === 'simple'} onClick={() => set('bathroomVasque', 'simple')} />
+            <RadioOption label="Double vasque" selected={formData.bathroomVasque === 'double'} onClick={() => set('bathroomVasque', 'double')} />
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="bathroomColonne"
+            checked={formData.bathroomColonne}
+            onChange={e => set('bathroomColonne', e.target.checked)}
+            className="w-5 h-5 text-agence-orange-500 rounded"
+          />
+          <label htmlFor="bathroomColonne" className="form-label cursor-pointer">Colonne</label>
+        </div>
+        <div>
+          <label className="form-label mb-3 block">Miroir</label>
+          <div className="grid grid-cols-2 gap-3">
+            <RadioOption label="Avec éclairage" selected={formData.bathroomMiroir === 'avec_eclairage'} onClick={() => set('bathroomMiroir', 'avec_eclairage')} />
+            <RadioOption label="Sans éclairage" selected={formData.bathroomMiroir === 'sans_eclairage'} onClick={() => set('bathroomMiroir', 'sans_eclairage')} />
+          </div>
+        </div>
+        <div>
+          <label className="form-label">Autre demande</label>
+          <textarea name="bathroomAutre" value={formData.bathroomAutre} onChange={handleInputChange} className="input-field w-full resize-none" rows={3} placeholder="Précisez vos besoins..." />
+        </div>
+      </div>
+
+      <SectionTitle icon="💰" title="Budget salle de bain" />
+      <textarea name="bathroomBudget" value={formData.bathroomBudget} onChange={handleInputChange} className="input-field w-full resize-none" rows={2} placeholder="Budget estimé..." />
+    </div>
+  );
+
+  const renderDressing = () => (
+    <div className="animate-fade-in">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">🔷 Section Dressing / Aménagement</h3>
+
+      <div className="space-y-6">
+        <div>
+          <label className="form-label mb-3 block">Pièce concernée</label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {['Chambre parentale', 'Chambre enfant', 'Salle à manger', 'Entrée', 'Buanderie', 'Salon'].map(v => (
+              <RadioOption key={v} label={v} selected={formData.dressingRoom === v} onClick={() => set('dressingRoom', v)} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="form-label mb-3 block">Structure</label>
+          <div className="grid grid-cols-2 gap-3">
+            <RadioOption label="Ouvert" selected={formData.dressingStructure === 'ouvert'} onClick={() => set('dressingStructure', 'ouvert')} />
+            <RadioOption label="Fermé" selected={formData.dressingStructure === 'ferme'} onClick={() => set('dressingStructure', 'ferme')} />
+          </div>
+        </div>
+        <div>
+          <label className="form-label mb-3 block">Type d'ouverture</label>
+          <div className="grid grid-cols-3 gap-2">
+            <RadioOption label="Battantes" selected={formData.dressingOpening === 'battantes'} onClick={() => set('dressingOpening', 'battantes')} />
+            <RadioOption label="Coulissantes" selected={formData.dressingOpening === 'coulissantes'} onClick={() => set('dressingOpening', 'coulissantes')} />
+            <RadioOption label="Pliantes" selected={formData.dressingOpening === 'pliantes'} onClick={() => set('dressingOpening', 'pliantes')} />
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle icon="💰" title="Budget dressing" />
+      <textarea name="dressingBudget" value={formData.dressingBudget} onChange={handleInputChange} className="input-field w-full resize-none" rows={2} placeholder="Budget estimé..." />
+    </div>
+  );
+
+  const renderDocuments = () => (
+    <div className="animate-fade-in">
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">📄 Documents & Inspirations</h3>
       <div className="space-y-8">
         {/* Floor Plan */}
-        <div className="border border-agence-gray-200 rounded-lg p-6 space-y-4 bg-white">
+        <div className="border border-agence-gray-200 rounded-lg p-6 bg-white">
           <div className="flex items-start space-x-3">
-            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full">
-              <Upload size={24} />
-            </div>
+            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full"><Upload size={24} /></div>
             <div className="flex-1">
-              <h4 className="text-lg font-semibold text-agence-gray-800">Plan avec dimensions <span className="text-red-500">*</span></h4>
-              <p className="text-agence-gray-600 text-sm mb-4">Téléchargez un plan avec les dimensions de votre pièce (PDF, JPG ou PNG)</p>
-              
+              <h4 className="text-lg font-semibold text-agence-gray-800">Plan avec dimensions</h4>
+              <p className="text-agence-gray-600 text-sm mb-4">PDF, JPG ou PNG</p>
               <label className="btn-secondary inline-flex cursor-pointer">
-                <input
-                  type="file"
-                  name="floorPlan"
-                  onChange={(e) => handleFileChange(e, 'floorPlan')}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  required
-                />
+                <input type="file" onChange={e => handleFileChange(e, 'floorPlan')} accept=".pdf,.jpg,.jpeg,.png" className="hidden" />
                 <span>Sélectionner un fichier</span>
               </label>
-              
-              {formData.floorPlan && (
-                <div className="mt-3 text-sm text-agence-gray-700 flex items-center space-x-2">
-                  <span>✓</span>
-                  <span>{(formData.floorPlan as File).name}</span>
-                </div>
-              )}
+              {formData.floorPlan && <p className="mt-2 text-sm text-agence-gray-700">✓ {formData.floorPlan.name}</p>}
             </div>
           </div>
         </div>
-        
+
         {/* Photos */}
-        <div className="border border-agence-gray-200 rounded-lg p-6 space-y-4 bg-white">
+        <div className="border border-agence-gray-200 rounded-lg p-6 bg-white">
           <div className="flex items-start space-x-3">
-            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full">
-              <Upload size={24} />
-            </div>
+            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full"><Upload size={24} /></div>
             <div className="flex-1">
               <h4 className="text-lg font-semibold text-agence-gray-800">Photos de la pièce <span className="text-agence-gray-500 font-normal">(optionnel)</span></h4>
-              <p className="text-agence-gray-600 text-sm mb-4">Vous pouvez ajouter jusqu'à 3 photos de la pièce actuelle (JPG ou PNG)</p>
-              
+              <p className="text-agence-gray-600 text-sm mb-4">Jusqu'à 5 photos</p>
               <label className="btn-secondary inline-flex cursor-pointer">
-                <input
-                  type="file"
-                  name="photos"
-                  onChange={(e) => handleFileChange(e, 'photos')}
-                  accept=".jpg,.jpeg,.png"
-                  className="hidden"
-                  multiple
-                />
+                <input type="file" onChange={e => handleFileChange(e, 'photos')} accept=".jpg,.jpeg,.png" className="hidden" multiple />
                 <span>Sélectionner des photos</span>
               </label>
-              
-              {formData.photos && formData.photos.length > 0 && (
-                <div className="mt-3 text-sm text-agence-gray-700">
-                  <p className="mb-2">{formData.photos.length} photo(s) sélectionnée(s) :</p>
-                  <ul className="space-y-1 list-disc pl-5">
-                    {Array.from(formData.photos).map((photo, index) => (
-                      <li key={index}>{(photo as File).name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {formData.photos.length > 0 && <p className="mt-2 text-sm text-agence-gray-700">{formData.photos.length} photo(s)</p>}
             </div>
           </div>
         </div>
 
-        {/* Inspiration Photos */}
-        <div className="border border-agence-gray-200 rounded-lg p-6 space-y-4 bg-white">
+        {/* Inspiration */}
+        <div className="border border-agence-gray-200 rounded-lg p-6 bg-white">
           <div className="flex items-start space-x-3">
-            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full">
-              <Instagram size={24} />
-            </div>
+            <div className="p-2 bg-agence-orange-100 text-agence-orange-500 rounded-full"><Instagram size={24} /></div>
             <div className="flex-1">
               <h4 className="text-lg font-semibold text-agence-gray-800">Photos d'inspiration <span className="text-agence-gray-500 font-normal">(optionnel)</span></h4>
-              <p className="text-agence-gray-600 text-sm mb-4">Téléchargez jusqu'à 5 photos de cuisines qui vous inspirent</p>
-              
               <label className="btn-secondary inline-flex cursor-pointer">
-                <input
-                  type="file"
-                  name="inspirationPhotos"
-                  onChange={(e) => handleFileChange(e, 'inspirationPhotos')}
-                  accept=".jpg,.jpeg,.png"
-                  className="hidden"
-                  multiple
-                />
+                <input type="file" onChange={e => handleFileChange(e, 'inspirationPhotos')} accept=".jpg,.jpeg,.png" className="hidden" multiple />
                 <span>Sélectionner des inspirations</span>
               </label>
-              
-              {formData.inspirationPhotos && formData.inspirationPhotos.length > 0 && (
-                <div className="mt-3 text-sm text-agence-gray-700">
-                  <p className="mb-2">{formData.inspirationPhotos.length} photo(s) d'inspiration :</p>
-                  <ul className="space-y-1 list-disc pl-5">
-                    {Array.from(formData.inspirationPhotos).map((photo, index) => (
-                      <li key={index}>{(photo as File).name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {formData.inspirationPhotos.length > 0 && <p className="mt-2 text-sm text-agence-gray-700">{formData.inspirationPhotos.length} photo(s)</p>}
             </div>
           </div>
         </div>
 
-        {/* Inspiration Links */}
         <div>
-          <label htmlFor="inspirationLinks" className="form-label flex items-center gap-2">
-            <LinkIcon size={16} />
-            Liens Pinterest / Instagram
-          </label>
-          <textarea
-            id="inspirationLinks"
-            name="inspirationLinks"
-            value={formData.inspirationLinks}
-            onChange={handleInputChange}
-            className="input-field w-full resize-none"
-            rows={3}
-            placeholder="Collez vos liens vers des tableaux Pinterest ou posts Instagram qui vous inspirent..."
-          ></textarea>
+          <label className="form-label flex items-center gap-2"><LinkIcon size={16} /> Liens Pinterest / Instagram</label>
+          <textarea name="inspirationLinks" value={formData.inspirationLinks} onChange={handleInputChange} className="input-field w-full resize-none" rows={3} placeholder="Collez vos liens..." />
+        </div>
+        <div>
+          <label className="form-label">Références vues en magasin</label>
+          <textarea name="storeReferences" value={formData.storeReferences} onChange={handleInputChange} className="input-field w-full resize-none" rows={3} placeholder="Ex: Modèle vu chez..." />
         </div>
 
-        {/* Store References */}
-        <div>
-          <label htmlFor="storeReferences" className="form-label">Références vues en magasin</label>
-          <textarea
-            id="storeReferences"
-            name="storeReferences"
-            value={formData.storeReferences}
-            onChange={handleInputChange}
-            className="input-field w-full resize-none"
-            rows={3}
-            placeholder="Ex: Modèle METOD chez IKEA, Cuisine KONTIKA chez But..."
-          ></textarea>
-        </div>
-        
         <div className="flex items-start space-x-3 p-4 bg-agence-orange-50 border border-agence-orange-200 rounded-lg">
           <Info className="text-agence-orange-500 h-5 w-5 mt-0.5" />
-          <p className="text-agence-gray-700 text-sm">
-            Les photos et plans nous aident à mieux comprendre votre projet et à vous fournir des devis plus précis.
-          </p>
+          <p className="text-agence-gray-700 text-sm">Les photos et plans nous aident à mieux comprendre votre projet.</p>
         </div>
       </div>
     </div>
   );
 
-  const renderProfessionalsStep = () => (
+  const renderProfessionals = () => (
     <div className="animate-fade-in">
       <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Choisissez vos professionnels</h3>
-      
       <div className="mb-6 p-4 bg-agence-orange-50 border border-agence-orange-200 rounded-lg">
         <div className="flex items-start space-x-3">
           <Info className="text-agence-orange-500 h-5 w-5 mt-0.5" />
           <div>
             <h4 className="font-medium text-agence-gray-800">Sélectionnez entre 3 et 5 professionnels</h4>
-            <p className="text-sm text-agence-gray-600">
-              Ces professionnels recevront votre demande de devis et vous contacteront avec leurs propositions.
-            </p>
+            <p className="text-sm text-agence-gray-600">Ils recevront votre demande de devis.</p>
           </div>
         </div>
       </div>
-      
+
       <div className="mb-6">
-        <label htmlFor="proximityFilter" className="form-label">Filtrer par proximité</label>
+        <label className="form-label">Filtrer par proximité</label>
         <div className="grid grid-cols-3 gap-2 mt-2">
-          <button
-            type="button"
-            onClick={() => handleProximityChange('postcode')}
-            className={`py-2 px-3 rounded-md border text-sm font-medium ${
-              proximity === 'postcode' 
-                ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' 
-                : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
-            }`}
-          >
-            Même département
-          </button>
-          <button
-            type="button"
-            onClick={() => handleProximityChange('radius')}
-            className={`py-2 px-3 rounded-md border text-sm font-medium ${
-              proximity === 'radius' 
-                ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' 
-                : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
-            }`}
-          >
-            Rayon de 50km
-          </button>
-          <button
-            type="button"
-            onClick={() => handleProximityChange('both')}
-            className={`py-2 px-3 rounded-md border text-sm font-medium ${
-              proximity === 'both' 
-                ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' 
-                : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'
-            }`}
-          >
-            Les deux
-          </button>
+          {[
+            { key: 'postcode', label: 'Même département' },
+            { key: 'radius', label: 'Rayon de 50km' },
+            { key: 'both', label: 'Les deux' },
+          ].map(f => (
+            <button key={f.key} type="button" onClick={() => setProximity(f.key)}
+              className={`py-2 px-3 rounded-md border text-sm font-medium ${proximity === f.key ? 'bg-agence-orange-100 border-agence-orange-300 text-agence-orange-800' : 'bg-white border-agence-gray-200 text-agence-gray-700 hover:bg-agence-gray-50'}`}
+            >{f.label}</button>
+          ))}
         </div>
       </div>
-      
+
       <div className="flex justify-between items-center mb-4">
-        <h4 className="text-lg font-medium text-agence-gray-800">
-          Professionnels dans votre secteur
-        </h4>
-        <div className="text-sm font-medium px-3 py-1 bg-agence-orange-100 text-agence-orange-800 rounded-full">
-          {selectedCount}/5 sélectionnés
-        </div>
+        <h4 className="text-lg font-medium text-agence-gray-800">Professionnels dans votre secteur</h4>
+        <div className="text-sm font-medium px-3 py-1 bg-agence-orange-100 text-agence-orange-800 rounded-full">{selectedCount}/5</div>
       </div>
-      
+
       <div className="space-y-4">
         {isLoadingPros ? (
           <div className="text-center p-8 border border-dashed border-agence-gray-300 rounded-lg">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-agence-orange-500 mb-2" />
-            <p className="text-agence-gray-600">Chargement des professionnels...</p>
+            <p className="text-agence-gray-600">Chargement...</p>
           </div>
         ) : localProfessionals.length > 0 ? (
-          localProfessionals.map(professional => {
-            const isSelected = formData.selectedProfessionals.includes(professional.id);
-            
+          localProfessionals.map(pro => {
+            const isSelected = formData.selectedProfessionals.includes(pro.id);
             return (
-              <div 
-                key={professional.id}
-                className={`p-4 border rounded-lg transition-all ${
-                  isSelected 
-                    ? 'border-agence-orange-500 bg-agence-orange-50' 
-                    : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'
-                }`}
-              >
+              <div key={pro.id} className={`p-4 border rounded-lg transition-all ${isSelected ? 'border-agence-orange-500 bg-agence-orange-50' : 'border-agence-gray-200 bg-white hover:border-agence-orange-200'}`}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <h5 className="font-semibold text-agence-gray-800">{professional.company_name}</h5>
+                    <h5 className="font-semibold text-agence-gray-800">{pro.company_name}</h5>
                     <div className="text-sm text-agence-gray-600 mt-1">
-                      <span className="inline-block mr-4 capitalize">{professional.entity_type}</span>
-                      <span className="inline-block mr-4">
-                        <span className="inline-flex items-center">
-                          <MapPin size={14} className="mr-1 text-agence-gray-500" />
-                          {professional.city} ({professional.postal_code})
-                        </span>
-                      </span>
-                      {professional.selected_plan === 'premium' && (
-                        <span className="inline-flex items-center bg-agence-orange-100 text-agence-orange-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                          Premium
-                        </span>
-                      )}
+                      <span className="capitalize mr-4">{pro.entity_type}</span>
+                      <span className="inline-flex items-center"><MapPin size={14} className="mr-1" />{pro.city} ({pro.postal_code})</span>
+                      {pro.selected_plan === 'premium' && <span className="ml-2 bg-agence-orange-100 text-agence-orange-700 px-2 py-0.5 rounded-full text-xs font-medium">Premium</span>}
                     </div>
-                    {(professional.distance ?? 0) > 0 && (
-                      <div className="mt-1 inline-block px-2 py-1 bg-agence-gray-100 text-agence-gray-700 text-xs rounded-md">
-                        {professional.distance} km
-                      </div>
-                    )}
+                    {(pro.distance ?? 0) > 0 && <div className="mt-1 inline-block px-2 py-1 bg-agence-gray-100 text-agence-gray-700 text-xs rounded-md">{pro.distance} km</div>}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleProfessionalSelection(professional.id)}
-                    className={`flex items-center justify-center w-6 h-6 rounded-full border ${
-                      isSelected 
-                        ? 'bg-agence-orange-500 border-agence-orange-500 text-white' 
-                        : 'border-agence-gray-300 bg-white'
-                    }`}
-                    aria-label={isSelected ? "Désélectionner" : "Sélectionner"}
-                  >
+                  <button type="button" onClick={() => toggleProfessionalSelection(pro.id)}
+                    className={`flex items-center justify-center w-6 h-6 rounded-full border ${isSelected ? 'bg-agence-orange-500 border-agence-orange-500 text-white' : 'border-agence-gray-300 bg-white'}`}>
                     {isSelected && <Check className="w-4 h-4" />}
                   </button>
                 </div>
@@ -1179,136 +834,89 @@ const MultiStepForm = () => {
           })
         ) : (
           <div className="text-center p-8 border border-dashed border-agence-gray-300 rounded-lg">
-            <p className="text-agence-gray-600 mb-2">
-              {allProfessionals.length === 0 
-                ? "Aucun professionnel n'est encore inscrit sur la plateforme."
-                : "Aucun professionnel trouvé dans votre secteur."}
-            </p>
-            <p className="text-sm text-agence-gray-500">
-              Votre demande sera automatiquement transmise aux professionnels les plus proches.
-            </p>
+            <p className="text-agence-gray-600">{allProfessionals.length === 0 ? "Aucun professionnel inscrit." : "Aucun professionnel trouvé dans votre secteur."}</p>
+            <p className="text-sm text-agence-gray-500">Votre demande sera transmise automatiquement.</p>
           </div>
         )}
       </div>
     </div>
   );
 
-  const renderConfirmationStep = () => (
+  const renderConfirmation = () => (
     <div className="animate-fade-in">
-      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Confirmation de votre demande</h3>
-      
+      <h3 className="text-2xl font-semibold mb-6 text-agence-gray-800">Confirmation</h3>
       <div className="bg-white border border-agence-gray-200 rounded-lg p-6 shadow-sm mb-8">
-        <p className="text-agence-gray-700 mb-6">
-          Veuillez vérifier les informations de votre demande de devis avant de soumettre.
-        </p>
-        
+        <p className="text-agence-gray-700 mb-6">Vérifiez vos informations avant de soumettre.</p>
         <div className="space-y-6">
           <div>
-            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
-              Informations personnelles
-            </h4>
+            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b pb-2">Informations personnelles</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-agence-gray-500">Nom complet:</span>
-                <p className="font-medium text-agence-gray-800">{formData.firstName} {formData.lastName}</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Téléphone:</span>
-                <p className="font-medium text-agence-gray-800">{formData.phone}</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Email:</span>
-                <p className="font-medium text-agence-gray-800">{formData.email}</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Adresse:</span>
-                <p className="font-medium text-agence-gray-800">{formData.address}, {formData.postalCode} {formData.city}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
-              Configuration cuisine
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-agence-gray-500">Configuration:</span>
-                <p className="font-medium text-agence-gray-800">{formData.kitchenLayout || '-'}</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Type:</span>
-                <p className="font-medium text-agence-gray-800">{formData.kitchenType || '-'}</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Surface:</span>
-                <p className="font-medium text-agence-gray-800">{formData.surface} m²</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Budget estimé:</span>
-                <p className="font-medium text-agence-gray-800">
-                  {formData.budget === 'less5k' && 'Moins de 5 000 €'}
-                  {formData.budget === '5kTo10k' && '5 000 € à 10 000 €'}
-                  {formData.budget === '10kTo15k' && '10 000 € à 15 000 €'}
-                  {formData.budget === '15kTo20k' && '15 000 € à 20 000 €'}
-                  {formData.budget === 'more20k' && 'Plus de 20 000 €'}
-                </p>
-              </div>
+              <div><span className="text-agence-gray-500">Nom:</span><p className="font-medium">{formData.firstName} {formData.lastName}</p></div>
+              <div><span className="text-agence-gray-500">Tél:</span><p className="font-medium">{formData.phone}</p></div>
+              <div><span className="text-agence-gray-500">Email:</span><p className="font-medium">{formData.email}</p></div>
+              <div><span className="text-agence-gray-500">Adresse:</span><p className="font-medium">{formData.address}, {formData.postalCode} {formData.city}</p></div>
+              <div><span className="text-agence-gray-500">Logement:</span><p className="font-medium capitalize">{formData.housingType || '-'}</p></div>
             </div>
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
-              Matériaux & Équipements
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-agence-gray-500">Façades:</span>
-                <p className="font-medium text-agence-gray-800">{formData.facadeFinish.join(', ') || '-'}</p>
-              </div>
-              <div>
-                <span className="text-agence-gray-500">Plan de travail:</span>
-                <p className="font-medium text-agence-gray-800">{formData.countertopMaterial.join(', ') || '-'}</p>
-              </div>
-              <div className="md:col-span-2">
-                <span className="text-agence-gray-500">Électroménager:</span>
-                <p className="font-medium text-agence-gray-800">{formData.appliances.join(', ') || '-'}</p>
-              </div>
-            </div>
+            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b pb-2">Projets sélectionnés</h4>
+            <p className="font-medium text-sm capitalize">{formData.projects.map(p => p.replace('_', ' ')).join(', ') || '-'}</p>
           </div>
-          
-          <div>
-            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b border-agence-gray-200 pb-2">
-              Professionnels sélectionnés
-            </h4>
-            <div className="space-y-2">
-              {formData.selectedProfessionals.length > 0 ? (
-                <ul className="list-disc pl-5 text-sm">
-                  {formData.selectedProfessionals.map(proId => {
-                    const pro = localProfessionals.find(p => p.id === proId);
-                    return pro ? (
-                      <li key={pro.id} className="text-agence-gray-700">
-                        {pro.company_name} - {pro.entity_type}, {pro.city}
-                      </li>
-                    ) : null;
-                  })}
-                </ul>
-              ) : (
-                <p className="text-sm text-agence-gray-500">Attribution automatique aux professionnels les plus proches</p>
-              )}
+
+          {formData.projects.includes('cuisine') && (
+            <div>
+              <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b pb-2">Cuisine</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="text-agence-gray-500">Installation:</span><p className="font-medium">{formData.kitchenInstallType.join(', ') || '-'}</p></div>
+                <div><span className="text-agence-gray-500">Plan de travail:</span><p className="font-medium">{formData.kitchenCountertop.join(', ') || '-'}</p></div>
+                <div><span className="text-agence-gray-500">Prestations:</span><p className="font-medium">{formData.kitchenPrestations.join(', ') || '-'}</p></div>
+                {formData.kitchenBudget && <div><span className="text-agence-gray-500">Budget:</span><p className="font-medium">{formData.kitchenBudget}</p></div>}
+              </div>
             </div>
+          )}
+
+          {formData.projects.includes('salle_de_bain') && (
+            <div>
+              <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b pb-2">Salle de bain</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="text-agence-gray-500">Vasque:</span><p className="font-medium">{formData.bathroomVasque || '-'}</p></div>
+                <div><span className="text-agence-gray-500">Miroir:</span><p className="font-medium">{formData.bathroomMiroir?.replace('_', ' ') || '-'}</p></div>
+                {formData.bathroomBudget && <div><span className="text-agence-gray-500">Budget:</span><p className="font-medium">{formData.bathroomBudget}</p></div>}
+              </div>
+            </div>
+          )}
+
+          {formData.projects.includes('dressing') && (
+            <div>
+              <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b pb-2">Dressing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="text-agence-gray-500">Pièce:</span><p className="font-medium">{formData.dressingRoom || '-'}</p></div>
+                <div><span className="text-agence-gray-500">Structure:</span><p className="font-medium">{formData.dressingStructure || '-'}</p></div>
+                <div><span className="text-agence-gray-500">Ouverture:</span><p className="font-medium">{formData.dressingOpening || '-'}</p></div>
+                {formData.dressingBudget && <div><span className="text-agence-gray-500">Budget:</span><p className="font-medium">{formData.dressingBudget}</p></div>}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h4 className="text-lg font-semibold text-agence-gray-800 mb-3 border-b pb-2">Professionnels sélectionnés</h4>
+            {formData.selectedProfessionals.length > 0 ? (
+              <ul className="list-disc pl-5 text-sm">
+                {formData.selectedProfessionals.map(proId => {
+                  const pro = localProfessionals.find(p => p.id === proId);
+                  return pro ? <li key={pro.id} className="text-agence-gray-700">{pro.company_name} - {pro.city}</li> : null;
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-agence-gray-500">Attribution automatique</p>
+            )}
           </div>
         </div>
-        
+
         <div className="mt-8 p-4 bg-agence-gray-50 border border-agence-gray-200 rounded-lg">
           <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="termsAccepted"
-              name="termsAccepted"
-              className="w-5 h-5 text-agence-orange-500"
-              required
-            />
+            <input type="checkbox" id="termsAccepted" className="w-5 h-5 text-agence-orange-500" required />
             <label htmlFor="termsAccepted" className="text-sm text-agence-gray-700">
               J'accepte les <a href="/terms" className="text-agence-orange-500 hover:underline">conditions générales</a> et la <a href="/privacy" className="text-agence-orange-500 hover:underline">politique de confidentialité</a>
             </label>
@@ -1318,73 +926,43 @@ const MultiStepForm = () => {
     </div>
   );
 
+  // ---- Step Renderer ----
   const renderStep = () => {
-    switch (currentStep) {
-      case 0:
-        return renderPersonalInfoStep();
-      case 1:
-        return renderProjectDetailsStep();
-      case 2:
-        return renderConfigurationStep();
-      case 3:
-        return renderMaterialsStep();
-      case 4:
-        return renderAppliancesStep();
-      case 5:
-        return renderDocumentsStep();
-      case 6:
-        return renderProfessionalsStep();
-      case 7:
-        return renderConfirmationStep();
-      default:
-        return null;
+    const key = steps[currentStep]?.key;
+    switch (key) {
+      case 'personal': return renderPersonalInfo();
+      case 'housing': return renderHousing();
+      case 'projects': return renderProjects();
+      case 'kitchen': return renderKitchen();
+      case 'bathroom': return renderBathroom();
+      case 'dressing': return renderDressing();
+      case 'documents': return renderDocuments();
+      case 'professionals': return renderProfessionals();
+      case 'confirmation': return renderConfirmation();
+      default: return null;
     }
   };
+
+  const isLastStep = currentStep === steps.length - 1;
 
   return (
     <div className="max-w-3xl mx-auto">
       <StepIndicator currentStep={currentStep} steps={steps} />
-      
-      <form onSubmit={handleSubmit} className="bg-agence-gray-50 rounded-xl p-6 md:p-8 shadow-sm border border-agence-gray-200">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-agence-gray-200 p-6 md:p-8">
         {renderStep()}
-        
-        <div className="mt-8 flex justify-between">
+        <div className="flex justify-between mt-8 pt-6 border-t border-agence-gray-200">
           {currentStep > 0 ? (
-            <button
-              type="button"
-              onClick={prevStep}
-              className="flex items-center space-x-2 px-6 py-2 border border-agence-gray-300 rounded-full text-agence-gray-700 hover:bg-agence-gray-100 transition-colors"
-            >
-              <ArrowLeft size={18} />
-              <span>Précédent</span>
+            <button type="button" onClick={prevStep} className="btn-secondary flex items-center gap-2">
+              <ArrowLeft size={16} /> Précédent
+            </button>
+          ) : <div />}
+          {isLastStep ? (
+            <button type="submit" disabled={isSubmitting} className="btn-primary flex items-center gap-2">
+              {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Envoi...</> : <><Check size={16} /> Envoyer ma demande</>}
             </button>
           ) : (
-            <div></div>
-          )}
-          
-          {currentStep < steps.length - 1 ? (
-            <button
-              type="button"
-              onClick={nextStep}
-              className="flex items-center space-x-2 btn-primary"
-            >
-              <span>Suivant</span>
-              <ArrowRight size={18} />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="flex items-center space-x-2 btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Envoi en cours...</span>
-                </>
-              ) : (
-                <span>Soumettre ma demande</span>
-              )}
+            <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-2">
+              Suivant <ArrowRight size={16} />
             </button>
           )}
         </div>
